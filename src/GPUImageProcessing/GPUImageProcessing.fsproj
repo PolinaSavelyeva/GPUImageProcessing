@@ -17,7 +17,22 @@
     <ItemGroup>
         <Compile Include="AssemblyInfo.fs" />
         <None Include="App.config" />
-        <Compile Include="Main.fs" />
+        <Compile Include="MyImage.fs" />
+        <Compile Include="Helper.fs" />
+        <Compile Include="GPU.fs" />
+        <Compile Include="Kernels.fs" />
+        <Compile Include="Agents.fs" />
+        <Compile Include="Process.fs" />
+        <Compile Include="ArguCommands.fs" />
+        <Compile Include="CLI.fs" />
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Brahma.FSharp" Version="2.0.5" />
+      <PackageReference Include="Brahma.FSharp.OpenCL.AST" Version="2.0.5" />
+      <PackageReference Include="Brahma.FSharp.OpenCL.Printer" Version="2.0.5" />
+      <PackageReference Include="Brahma.FSharp.OpenCL.Shared" Version="2.0.5" />
+      <PackageReference Include="Brahma.FSharp.OpenCL.Translator" Version="2.0.5" />
+      <PackageReference Include="SixLabors.ImageSharp" Version="3.0.1" />
     </ItemGroup>
     <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

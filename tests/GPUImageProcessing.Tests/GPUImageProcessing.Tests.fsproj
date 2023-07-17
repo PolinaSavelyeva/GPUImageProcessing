@@ -7,11 +7,21 @@
     </PropertyGroup>
     <ItemGroup>
         <Compile Include="AssemblyInfo.fs" />
-        <Compile Include="Tests.fs" />
+        <Compile Include="Generators.fs" />
+        <Compile Include="Helper.fs" />
+        <Content Include="Images\input\1.jpg" />
+        <Content Include="Images\input\2.jpg" />
+        <Content Include="Images\input\3.jpg" />
+        <Content Include="Images\input\4.jpg" />
+        <Folder Include="Images\output\" />
+        <Compile Include="GPU.fs" />
         <Compile Include="Main.fs" />
     </ItemGroup>
     <ItemGroup>
         <ProjectReference Include="../../src/GPUImageProcessing/GPUImageProcessing.fsproj" />
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Expecto.FsCheck" Version="10.1.0" />
     </ItemGroup>
     <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
