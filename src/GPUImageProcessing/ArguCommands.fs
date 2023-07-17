@@ -25,8 +25,7 @@ type CLIArguments =
     interface IArgParserTemplate with
         member s.Usage =
             match s with
-            | InputPath _ ->
-                "Path to a file or a directory where the images will be processed from."
+            | InputPath _ -> "Path to a file or a directory where the images will be processed from."
             | OutputPath _ -> "Path to a file or a directory where the images will be saved."
             | AgentsSupport _ -> "Process files using different agents strategy."
             | GPUPlatform _ -> "Process files using specific GPU platform."

@@ -32,13 +32,7 @@ let main argv =
         let unit = res.GetResult(GPUPlatform)
         let agentsSupport = res.GetResult(AgentsSupport)
 
-        Process.processImages
-            inputPath
-            outputPath
-            (unit
-             |> arguGPUPlatformParser)
-            processors
-            agentsSupport
+        Process.processImages inputPath outputPath (unit |> arguGPUPlatformParser) processors agentsSupport
 
     | _ -> printfn $"Unexpected command.\n {parser.PrintUsage()}"
 

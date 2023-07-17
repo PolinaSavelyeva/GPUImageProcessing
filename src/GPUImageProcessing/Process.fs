@@ -45,24 +45,12 @@ let processImages inputPath outputPath (gpuPlatform: Platform) imageEditorsList 
     let listAllImages directory =
 
         let allowableExtensions =
-            [| ".jpg"
-               ".jpeg"
-               ".png"
-               ".gif"
-               ".webp"
-               ".pbm"
-               ".bmp"
-               ".tga"
-               ".tiff" |]
+            [| ".jpg"; ".jpeg"; ".png"; ".gif"; ".webp"; ".pbm"; ".bmp"; ".tga"; ".tiff" |]
 
         let allFilesSeq = System.IO.Directory.EnumerateFiles directory
 
         let allowableFilesSeq =
-            Seq.filter
-                (fun (path: string) ->
-                    Array.contains (System.IO.Path.GetExtension path) allowableExtensions
-                )
-                allFilesSeq
+            Seq.filter (fun (path: string) -> Array.contains (System.IO.Path.GetExtension path) allowableExtensions) allFilesSeq
 
         List.ofSeq allowableFilesSeq
 
@@ -73,17 +61,10 @@ let processImages inputPath outputPath (gpuPlatform: Platform) imageEditorsList 
             listAllImages inputPath
 
     let imageEditorsList =
-        if
-            ClDevice.GetAvailableDevices(gpuPlatform)
-            |> Seq.isEmpty
-        then
+        if ClDevice.GetAvailableDevices(gpuPlatform) |> Seq.isEmpty then
             failwith $"No %A{gpuPlatform} device was found. "
         else
-            let clContext =
-                ClContext(
-                    ClDevice.GetAvailableDevices(gpuPlatform)
-                    |> Seq.head
-                )
+            let clContext = ClContext(ClDevice.GetAvailableDevices(gpuPlatform) |> Seq.head)
 
             let parsingFunction = transformationsParser clContext 64
             List.map parsingFunction imageEditorsList
@@ -93,14 +74,10 @@ let processImages inputPath outputPath (gpuPlatform: Platform) imageEditorsList 
         let imageEditor = List.reduce (>>) imageEditorsList
 
         let processorsArray =
-            Array.init
-                System.Environment.ProcessorCount
-                (fun _ -> imageFullProcessor imageEditor outputPath)
+            Array.init System.Environment.ProcessorCount (fun _ -> imageFullProcessor imageEditor outputPath)
 
         for file in filesToProcess do
-            (Array.minBy
-                (fun (p: MailboxProcessor<pathMessage>) -> p.CurrentQueueLength)
-                processorsArray)
+            (Array.minBy (fun (p: MailboxProcessor<pathMessage>) -> p.CurrentQueueLength) processorsArray)
                 .Post(Path file)
 
         for imgProcessor in processorsArray do
@@ -125,11 +102,8 @@ let processImages inputPath outputPath (gpuPlatform: Platform) imageEditorsList 
         let imageProcessAndSave path =
             let image = load path
 
-            let editedImage =
-                image
-                |> List.reduce (>>) imageEditorsList
+            let editedImage = image |> List.reduce (>>) imageEditorsList
 
-            Helper.generatePath outputPath image.Name
-            |> save editedImage
+            Helper.generatePath outputPath image.Name |> save editedImage
 
         List.iter imageProcessAndSave filesToProcess

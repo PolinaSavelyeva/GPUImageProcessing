@@ -9,8 +9,7 @@ let logger =
             while true do
                 let! message = inbox.Receive()
                 printfn $"{message}"
-        }
-    )
+        })
 
 type imageMessage =
     | Image of MyImage
