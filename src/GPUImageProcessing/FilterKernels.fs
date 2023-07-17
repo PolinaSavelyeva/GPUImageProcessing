@@ -1,4 +1,4 @@
-module Kernels
+module FilterKernels
 
 let gaussianBlurKernel =
     array2D [ [ 1; 4; 6; 4; 1 ]; [ 4; 16; 24; 16; 4 ]; [ 6; 24; 36; 24; 6 ]; [ 4; 16; 24; 16; 4 ]; [ 1; 4; 6; 4; 1 ] ]

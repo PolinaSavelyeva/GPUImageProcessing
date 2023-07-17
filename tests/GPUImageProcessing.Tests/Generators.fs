@@ -15,7 +15,7 @@ let myImageGen =
 
         let! data = Gen.arrayOfLength (length1 * length2) (Gen.elements [ 0uy .. 127uy ])
 
-        return! Gen.constant (MyImage.MyImage(data, length1, length2, "MyImage"))
+        return! Gen.constant (BasicTools.MyImage(data, length1, length2, "MyImage"))
     }
 
 let kernelGen =

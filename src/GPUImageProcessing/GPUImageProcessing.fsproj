@@ -17,12 +17,13 @@
     <ItemGroup>
         <Compile Include="AssemblyInfo.fs" />
         <None Include="App.config" />
-        <Compile Include="MyImage.fs" />
+        <Compile Include="BasicTools.fs" />
         <Compile Include="Helper.fs" />
-        <Compile Include="GPU.fs" />
-        <Compile Include="Kernels.fs" />
+        <Compile Include="GPUKernels.fs" />
+        <Compile Include="GPUTools.fs" />
+        <Compile Include="FilterKernels.fs" />
         <Compile Include="Agents.fs" />
-        <Compile Include="Process.fs" />
+        <Compile Include="Processing.fs" />
         <Compile Include="ArguCommands.fs" />
         <Compile Include="CLI.fs" />
     </ItemGroup>

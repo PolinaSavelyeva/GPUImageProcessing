@@ -1,8 +1,19 @@
-module GPU
+module GPUKernels
 
 open Brahma.FSharp
 
-let applyFilterGPUKernel (clContext: ClContext) localWorkSize =
+
+/// <summary>
+/// Creates compiled GPU filter kernel.
+/// </summary>
+/// <param name="clContext">The representation of OpenCL context.</param>
+/// <param name="localWorkSize">The size of the local work group.</param>
+/// <returns>
+/// A function that takes a command queue, filter parameters, image data, and result array as inputs
+/// and asynchronously applies the filter kernel to the image using the GPU.
+/// The resulting image data is stored in the result array.
+/// </returns>
+let applyFilter (clContext: ClContext) localWorkSize =
 
     let kernel =
         <@
@@ -36,7 +47,17 @@ let applyFilterGPUKernel (clContext: ClContext) localWorkSize =
         commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
         result
 
-let rotateGPUKernel (clContext: ClContext) localWorkSize =
+/// <summary>
+/// Creates compiled GPU rotation kernel.
+/// </summary>
+/// <param name="clContext">The representation of OpenCL context.</param>
+/// <param name="localWorkSize">The size of the local work group.</param>
+/// <returns>
+/// A function that takes a command queue, rotation param, image data, and result array as inputs
+/// and asynchronously rotates the image using the GPU.
+/// The resulting image data is stored in the result array.
+/// </returns>
+let rotate (clContext: ClContext) localWorkSize =
 
     let kernel =
         <@
@@ -63,7 +84,17 @@ let rotateGPUKernel (clContext: ClContext) localWorkSize =
         commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
         result
 
-let flipGPUKernel (clContext: ClContext) localWorkSize =
+/// <summary>
+/// Creates compiled GPU flip kernel.
+/// </summary>
+/// <param name="clContext">The representation of OpenCL context.</param>
+/// <param name="localWorkSize">The size of the local work group.</param>
+/// <returns>
+/// A function that takes a command queue, flip param, image data, and result array as inputs
+/// and asynchronously flips the image using the GPU.
+/// The resulting image data is stored in the result array.
+/// </returns>
+let flip (clContext: ClContext) localWorkSize =
 
     let kernel =
         <@
@@ -89,87 +120,3 @@ let flipGPUKernel (clContext: ClContext) localWorkSize =
         commandQueue.Post(Msg.MsgSetArguments(fun () -> kernel.KernelFunc ndRange image imageWidth imageHeight weight result))
         commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
         result
-
-let applyFilter (clContext: ClContext) (localWorkSize: int) =
-
-    let applyFilterKernel = applyFilterGPUKernel clContext localWorkSize
-    let queue = clContext.QueueProvider.CreateQueue()
-
-    fun (filter: float32[,]) (image: MyImage.MyImage) ->
-
-        let input =
-            clContext.CreateClArray<byte>(image.Data, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
-
-        let output =
-            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly, allocationMode = AllocationMode.Default)
-
-        let filterDiameter = (Array2D.length1 filter) / 2
-        let filter = Helper.toFlatArray filter
-
-        let clFilter =
-            clContext.CreateClArray<float32>(filter, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
-
-        let result = Array.zeroCreate (image.Height * image.Width)
-
-        let result =
-            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(applyFilterKernel queue clFilter filterDiameter input image.Height image.Width output, result, ch))
-
-        queue.Post(Msg.CreateFreeMsg clFilter)
-        queue.Post(Msg.CreateFreeMsg input)
-        queue.Post(Msg.CreateFreeMsg output)
-
-        MyImage.MyImage(result, image.Width, image.Height, image.Name)
-
-let rotate (clContext: ClContext) (localWorkSize: int) =
-
-    let rotateKernel = rotateGPUKernel clContext localWorkSize
-    let queue = clContext.QueueProvider.CreateQueue()
-
-    fun (isClockwise: bool) (image: MyImage.MyImage) ->
-
-        let input =
-            clContext.CreateClArray<byte>(image.Data, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
-
-        let output =
-            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly, allocationMode = AllocationMode.Default)
-
-        let weight = System.Convert.ToInt32 isClockwise
-        let clWeight = clContext.CreateClCell(weight)
-
-        let result = Array.zeroCreate (image.Height * image.Width)
-
-        let result =
-            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(rotateKernel queue clWeight input image.Height image.Width output, result, ch))
-
-        queue.Post(Msg.CreateFreeMsg clWeight)
-        queue.Post(Msg.CreateFreeMsg input)
-        queue.Post(Msg.CreateFreeMsg output)
-
-        MyImage.MyImage(result, image.Height, image.Width, image.Name)
-
-let flip (clContext: ClContext) (localWorkSize: int) =
-
-    let flipKernel = flipGPUKernel clContext localWorkSize
-    let queue = clContext.QueueProvider.CreateQueue()
-
-    fun (isVertical: bool) (image: MyImage.MyImage) ->
-
-        let input =
-            clContext.CreateClArray<byte>(image.Data, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
-
-        let output =
-            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly, allocationMode = AllocationMode.Default)
-
-        let weight = System.Convert.ToInt32 isVertical
-        let clWeight = clContext.CreateClCell(weight)
-
-        let result = Array.zeroCreate (image.Height * image.Width)
-
-        let result =
-            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(flipKernel queue clWeight input image.Height image.Width output, result, ch))
-
-        queue.Post(Msg.CreateFreeMsg clWeight)
-        queue.Post(Msg.CreateFreeMsg input)
-        queue.Post(Msg.CreateFreeMsg output)
-
-        MyImage.MyImage(result, image.Width, image.Height, image.Name)

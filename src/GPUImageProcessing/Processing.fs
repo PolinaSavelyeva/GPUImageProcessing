@@ -1,16 +1,22 @@
-module Process
+module Processing
 
 open Agents
-open MyImage
-open Kernels
+open BasicTools
+open FilterKernels
 open Brahma.FSharp
 
+/// <summary>
+/// Specifies the level of agents support.
+/// </summary>
 type AgentsSupport =
     | Full // Uses a single agent to open, process and save
     | Partial // Uses different agents for each transformation and saving
     | PartialUsingComposition // Uses one agent for transformation and one for save
     | No // Uses naive image processing function
 
+/// <summary>
+/// Represents the available image transformations.
+/// </summary>
 type Transformations =
     | Gauss
     | Sharpen
@@ -24,9 +30,9 @@ type Transformations =
 
 let transformationsParser (clContext: ClContext) (localWorkSize: int) =
 
-    let applyFilterKernel = GPU.applyFilter clContext localWorkSize
-    let flipKernel = GPU.flip clContext localWorkSize
-    let rotateKernel = GPU.rotate clContext localWorkSize
+    let applyFilterKernel = GPUTools.applyFilter clContext localWorkSize
+    let flipKernel = GPUTools.flip clContext localWorkSize
+    let rotateKernel = GPUTools.rotate clContext localWorkSize
 
     fun transformation ->
         match transformation with
@@ -40,6 +46,14 @@ let transformationsParser (clContext: ClContext) (localWorkSize: int) =
         | FlipV -> flipKernel true
         | FlipH -> flipKernel false
 
+/// <summary>
+/// Processes images located at the specified input path and saves the processed images to the specified output path.
+/// </summary>
+/// <param name="inputPath">The path where the input images are located.</param>
+/// <param name="outputPath">The path where the processed images will be saved.</param>
+/// <param name="gpuPlatform">The GPU platform to be used for processing.</param>
+/// <param name="imageEditorsList">A list of functions to be applied to the images.</param>
+/// <param name="agentsSupport">Specifies the level of agent support.</param>
 let processImages inputPath outputPath (gpuPlatform: Platform) imageEditorsList agentsSupport =
 
     let listAllImages directory =

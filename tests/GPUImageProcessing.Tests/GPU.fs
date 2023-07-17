@@ -5,8 +5,8 @@ open Expecto
 
 let device = Brahma.FSharp.ClDevice.GetFirstAppropriateDevice()
 let clContext = Brahma.FSharp.ClContext(device)
-let rotate = GPU.rotate clContext 64
-let flip = GPU.flip clContext 64
+let rotate = GPUTools.rotate clContext 64
+let flip = GPUTools.flip clContext 64
 
 let myConfig =
     { FsCheckConfig.defaultConfig with

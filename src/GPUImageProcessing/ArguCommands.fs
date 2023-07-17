@@ -2,25 +2,28 @@ module ArguCommands
 
 open Argu
 
-type ArguGPUPlatform =
-    | NvidiaGPU
-    | IntelGPU
-    | AmdGPU
-    | AnyGPU
+/// <summary>
+/// Represents the available GPU platforms for image processing.
+/// </summary>
+type GPUPlatform =
+    | Nvidia
+    | Intel
+    | Amd
+    | Any
 
-let arguGPUPlatformParser unit =
+let GPUPlatformParser unit =
     match unit with
-    | NvidiaGPU -> Brahma.FSharp.Platform.Nvidia
-    | IntelGPU -> Brahma.FSharp.Platform.Intel
-    | AmdGPU -> Brahma.FSharp.Platform.Amd
-    | AnyGPU -> Brahma.FSharp.Platform.Any
+    | Nvidia -> Brahma.FSharp.Platform.Nvidia
+    | Intel -> Brahma.FSharp.Platform.Intel
+    | Amd -> Brahma.FSharp.Platform.Amd
+    | Any -> Brahma.FSharp.Platform.Any
 
 type CLIArguments =
     | [<Mandatory; AltCommandLine("-in")>] InputPath of inputPath: string
     | [<Mandatory; AltCommandLine("-out")>] OutputPath of outputPath: string
-    | [<AltCommandLine("-agent"); EqualsAssignment>] AgentsSupport of Process.AgentsSupport
-    | [<AltCommandLine("-unit"); EqualsAssignment>] GPUPlatform of ArguGPUPlatform
-    | [<Mandatory; MainCommand>] Transformations of list<Process.Transformations>
+    | [<AltCommandLine("-agent"); EqualsAssignment>] AgentsSupport of Processing.AgentsSupport
+    | [<AltCommandLine("-unit"); EqualsAssignment>] GPUPlatform of GPUPlatform
+    | [<Mandatory; MainCommand>] Transformations of list<Processing.Transformations>
 
     interface IArgParserTemplate with
         member s.Usage =
