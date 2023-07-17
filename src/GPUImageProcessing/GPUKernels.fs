@@ -120,3 +120,31 @@ let flip (clContext: ClContext) localWorkSize =
         commandQueue.Post(Msg.MsgSetArguments(fun () -> kernel.KernelFunc ndRange image imageWidth imageHeight weight result))
         commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
         result
+
+let resize (clContext: ClContext) localWorkSize =
+
+    let kernel =
+        <@
+            fun (range: Range1D) (image: ClArray<byte>) imageWidth imageHeight newWidth newHeight (result: ClArray<byte>) ->
+                let scaleX = float imageWidth / float newWidth
+                let scaleY = float imageHeight / float newHeight
+                let p = range.GlobalID0
+                let newY = p / imageWidth
+                let newX = p % imageWidth
+                let originalY = int (float newY * scaleY)
+                let originalX = int (float newX * scaleX)
+                let originalIndex = originalY * imageWidth + originalX
+                let resizedIndex = newY * newWidth + newX
+                result[resizedIndex] <- image[originalIndex]
+        @>
+
+    let kernel = clContext.Compile kernel
+
+    fun (commandQueue: MailboxProcessor<Msg>) (image: ClArray<byte>) imageHeight imageWidth newWidth newHeight (result: ClArray<byte>) ->
+
+        let ndRange = Range1D.CreateValid(imageHeight * imageWidth, localWorkSize)
+        let kernel = kernel.GetKernel()
+
+        commandQueue.Post(Msg.MsgSetArguments(fun () -> kernel.KernelFunc ndRange image imageWidth imageHeight newWidth newHeight result))
+        commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
+        result

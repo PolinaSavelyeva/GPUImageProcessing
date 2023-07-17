@@ -6,7 +6,7 @@ open ArguCommands
 [<EntryPoint>]
 let main argv =
 
-    let errorHandler =
+    (*let errorHandler =
         ProcessExiter(
             colorizer =
                 function
@@ -34,6 +34,15 @@ let main argv =
 
         Processing.processImages inputPath outputPath (unit |> GPUPlatformParser) processors agentsSupport
 
-    | _ -> printfn $"Unexpected command.\n {parser.PrintUsage()}"
+    | _ -> printfn $"Unexpected command.\n {parser.PrintUsage()}"*)
+
+    let image =
+        BasicTools.load "/Users/lissa/Документы/GPUImageProcessing/tests/GPUImageProcessing.Tests/Images/output/3.jpg"
+
+    let device = Brahma.FSharp.ClDevice.GetFirstAppropriateDevice()
+    let clContext = Brahma.FSharp.ClContext(device)
+    let f = GPUTools.resize clContext 64
+    let processedImage = f 100 100 image
+    BasicTools.save processedImage "/Users/lissa/Документы/GPUImageProcessing/tests/GPUImageProcessing.Tests/Images/output/"
 
     0

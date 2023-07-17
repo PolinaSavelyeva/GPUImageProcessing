@@ -34,7 +34,7 @@ let applyFilterCPU filter (image: MyImage) =
 
         Array.fold2 (fun acc x y -> acc + x * y) 0.0f filter dataToHandle
 
-    MyImage(Array.mapi (fun p _ -> byte (pixelProcessing p)) image.Data, image.Width, image.Height, image.Name)
+    MyImage(Array.mapi (fun p _ -> byte (pixelProcessing p)) image.Data, image.Width, image.Height, image.Name, image.Extension)
 
 let rotateCPU (isClockwise: bool) (image: MyImage) =
 
@@ -51,7 +51,7 @@ let rotateCPU (isClockwise: bool) (image: MyImage) =
 
             buffer[ph + pw * image.Height] <- image.Data[j + i * image.Width]
 
-    MyImage(buffer, image.Height, image.Width, image.Name)
+    MyImage(buffer, image.Height, image.Width, image.Name, image.Extension)
 
 let flipCPU (isVertical: bool) (image: MyImage) =
 
@@ -68,4 +68,4 @@ let flipCPU (isVertical: bool) (image: MyImage) =
 
             buffer[pw + ph * image.Width] <- image.Data[j + i * image.Width]
 
-    MyImage(buffer, image.Width, image.Height, image.Name)
+    MyImage(buffer, image.Width, image.Height, image.Name, image.Extension)

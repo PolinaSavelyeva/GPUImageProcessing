@@ -1,5 +1,6 @@
 module GPU
 
+open BasicTools
 open Helper
 open Expecto
 
@@ -77,4 +78,34 @@ let tests =
               let resultsArray =
                   [| (myImage |> flip true |> flip true).Data; (myImage |> flip false |> flip false).Data |]
 
-              Expect.allEqual resultsArray myImage.Data $"Unexpected: %A{resultsArray} and original {myImage.Data}.\n Expected equality. " ]
+              Expect.allEqual resultsArray myImage.Data $"Unexpected: %A{resultsArray} and original {myImage.Data}.\n Expected equality. "
+
+          testCase "The saved image must be of the same format as the specified one"
+          <| fun _ ->
+
+              saveAs myImage1 Png (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Gif (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Jpeg (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Bmp (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Webp (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Tiff (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Tga (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Pbm (__SOURCE_DIRECTORY__ + "/Images/output/")
+
+              let pngImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.png")
+              let gifImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.gif")
+              let jpegImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.jpeg")
+              let bmpImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.bmp")
+              let webpImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.webp")
+              let tiffImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.tiff")
+              let tgaImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.tga")
+              let pbmImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.pbm")
+
+              Expect.equal pngImage.Extension ".png" $"Unexpected: %A{pngImage.Extension}.\n Expected: .png. "
+              Expect.equal gifImage.Extension ".gif" $"Unexpected: %A{gifImage.Extension}.\n Expected: .gif. "
+              Expect.equal jpegImage.Extension ".jpeg" $"Unexpected: %A{jpegImage.Extension}.\n Expected: .jpeg. "
+              Expect.equal bmpImage.Extension ".bmp" $"Unexpected: %A{bmpImage.Extension}.\n Expected: .bmp. "
+              Expect.equal webpImage.Extension ".webp" $"Unexpected: %A{webpImage.Extension}.\n Expected: .webp. "
+              Expect.equal tiffImage.Extension ".tiff" $"Unexpected: %A{pngImage.Extension}.\n Expected: .png. "
+              Expect.equal tgaImage.Extension ".tga" $"Unexpected: %A{tgaImage.Extension}.\n Expected: .tga. "
+              Expect.equal pbmImage.Extension ".pbm" $"Unexpected: %A{pbmImage.Extension}.\n Expected: .pbm. " ]

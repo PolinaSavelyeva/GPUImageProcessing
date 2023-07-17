@@ -1,5 +1,7 @@
 module Helper
 
+open System
+
 let toFlatArray array2D =
 
     seq {

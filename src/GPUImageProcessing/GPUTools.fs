@@ -38,7 +38,7 @@ let applyFilter (clContext: ClContext) (localWorkSize: int) =
         queue.Post(Msg.CreateFreeMsg input)
         queue.Post(Msg.CreateFreeMsg output)
 
-        BasicTools.MyImage(result, image.Width, image.Height, image.Name)
+        BasicTools.MyImage(result, image.Width, image.Height, image.Name, image.Extension)
 
 /// <summary>
 /// Rotates the image clockwise or counterclockwise using GPU.
@@ -74,7 +74,7 @@ let rotate (clContext: ClContext) (localWorkSize: int) =
         queue.Post(Msg.CreateFreeMsg input)
         queue.Post(Msg.CreateFreeMsg output)
 
-        BasicTools.MyImage(result, image.Height, image.Width, image.Name)
+        BasicTools.MyImage(result, image.Height, image.Width, image.Name, image.Extension)
 
 // <summary>
 /// Flips the image vertically or horizontally using GPU.
@@ -110,4 +110,27 @@ let flip (clContext: ClContext) (localWorkSize: int) =
         queue.Post(Msg.CreateFreeMsg input)
         queue.Post(Msg.CreateFreeMsg output)
 
-        BasicTools.MyImage(result, image.Width, image.Height, image.Name)
+        BasicTools.MyImage(result, image.Width, image.Height, image.Name, image.Extension)
+
+let resize (clContext: ClContext) (localWorkSize: int) =
+
+    let flipKernel = GPUKernels.resize clContext localWorkSize
+    let queue = clContext.QueueProvider.CreateQueue()
+
+    fun newWidth newHeight (image: BasicTools.MyImage) ->
+
+        let input =
+            clContext.CreateClArray<byte>(image.Data, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
+
+        let output =
+            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly, allocationMode = AllocationMode.Default)
+
+        let result = Array.zeroCreate (newWidth * newHeight)
+
+        let result =
+            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(flipKernel queue input image.Height image.Width newWidth newHeight output, result, ch))
+
+        queue.Post(Msg.CreateFreeMsg input)
+        queue.Post(Msg.CreateFreeMsg output)
+
+        BasicTools.MyImage(result, image.Width, image.Height, image.Name, image.Extension)
