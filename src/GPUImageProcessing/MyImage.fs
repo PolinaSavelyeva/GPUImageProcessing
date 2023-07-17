@@ -23,8 +23,27 @@ let load (filePath: string) =
 
     MyImage(buffer, image.Width, image.Height, System.IO.Path.GetFileName filePath)
 
-let save (image: MyImage) filePath =
+type ImageFormats =
+    | Png
+    | Gif
+    | Jpeg
+    | Bmp
+    | Webp
+    | Tiff
+    | Tga
+    | Pbm
 
-    let image = Image.LoadPixelData<L8>(image.Data, image.Width, image.Height)
+let save (image: MyImage) (savingFormat : ImageFormats) (filePath : string) =
 
-    image.Save filePath
+    let image =
+        Image.LoadPixelData<L8>(image.Data, image.Width, image.Height)
+
+    match savingFormat with
+    | Png -> image.SaveAsPng filePath
+    | Gif -> image.SaveAsGif filePath
+    | Jpeg -> image.SaveAsJpeg filePath
+    | Bmp -> image.SaveAsBmp filePath
+    | Webp -> image.SaveAsWebp filePath
+    | Tiff -> image.SaveAsTiff filePath
+    | Tga -> image.SaveAsTga filePath
+    | Pbm -> image.SaveAsPbm filePath
