@@ -2,7 +2,6 @@ module GPUKernels
 
 open Brahma.FSharp
 
-
 /// <summary>
 /// Creates compiled GPU filter kernel.
 /// </summary>

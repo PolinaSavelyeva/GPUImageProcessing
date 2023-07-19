@@ -2,11 +2,13 @@ module CLI
 
 open Argu
 open ArguCommands
+open SixLabors.ImageSharp
+open BasicTools
 
 [<EntryPoint>]
 let main argv =
 
-    let errorHandler =
+    (*let errorHandler =
         ProcessExiter(
             colorizer =
                 function
@@ -34,6 +36,36 @@ let main argv =
 
         Processing.processImages inputPath outputPath (unit |> GPUPlatformParser) processors agentsSupport
 
-    | _ -> printfn $"Unexpected command.\n {parser.PrintUsage()}"
+    | _ -> printfn $"Unexpected command.\n {parser.PrintUsage()}"*)
 
+    (*type Position =
+        | TopLeft
+        | TopCenter
+        | TopRight
+        | MiddleLeft
+        | MiddleCenter
+        | MiddleRight
+        | BottomLeft
+        | BottomCenter
+        | BottomRight*)
+
+    (*let cropCPU (image: MyImage) (x: int) (y: int) newWidth newHeight =
+
+        let buffer = Array.create (newWidth * newHeight) 0uy
+
+        for row = 0 to newHeight - 1 do
+            for column = 0 to newWidth - 1 do
+
+                let originalX = x + column
+                let originalY = y + row
+
+                if originalX < image.Width && originalY < image.Height then
+                    buffer[row * newWidth + column] <- image.Data[originalY * image.Width + originalX]
+
+        MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)
+
+
+    let image = BasicTools.load "/Users/lissa/Документы/GPUImageProcessing/tests/GPUImageProcessing.Tests/Images/input/3.jpg"
+    let procImage = cropCPU image 20 10 50 50
+    save image "/Users/lissa/Документы/GPUImageProcessing/tests/GPUImageProcessing.Tests/Images/output/"*)
     0

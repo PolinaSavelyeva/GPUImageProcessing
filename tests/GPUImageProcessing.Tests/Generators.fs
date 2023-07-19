@@ -1,12 +1,21 @@
 module Generators
 
 open FsCheck
+open System
 
 type Kernel =
     val Data: float32[,]
     val Length: int
 
     new(data, length) = { Data = data; Length = length }
+
+let generateUniqueFileName (extension: string) =
+
+    let time = DateTime.Now.ToString("yyyyMMdd_HHmmss")
+    let randomNumber = Random().Next(1000, 9999)
+    let fileName = sprintf "%s_%04d.%s" time randomNumber extension
+
+    fileName
 
 let myImageGen =
     gen {
@@ -15,7 +24,7 @@ let myImageGen =
 
         let! data = Gen.arrayOfLength (length1 * length2) (Gen.elements [ 0uy .. 127uy ])
 
-        return! Gen.constant (BasicTools.MyImage(data, length1, length2, "MyImage"))
+        return! Gen.constant (BasicTools.MyImage(data, length1, length2, generateUniqueFileName "jpeg"))
     }
 
 let kernelGen =

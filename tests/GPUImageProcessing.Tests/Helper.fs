@@ -1,16 +1,21 @@
 module Helper
 
 open BasicTools
+open Expecto
 
 let src = __SOURCE_DIRECTORY__
-
 let myImage1 = load (src + "/Images/input/1.jpg")
-
 let myImage2 = load (src + "/Images/input/2.jpg")
-
 let myImage3 = load (src + "/Images/input/3.jpg")
-
 let myImage4 = load (src + "/Images/input/4.jpg")
+
+let device = Brahma.FSharp.ClDevice.GetFirstAppropriateDevice()
+let clContext = Brahma.FSharp.ClContext(device)
+
+let myConfig =
+    { FsCheckConfig.defaultConfig with
+        arbitrary = [ typeof<Generators.MyGenerators> ]
+        maxTest = 10 }
 
 let applyFilterCPU filter (image: MyImage) =
 
@@ -75,7 +80,7 @@ let resizeCPUBilinear (image: MyImage) (newWidth: int) (newHeight: int) =
     let scaleX = float32 image.Width / float32 newWidth
     let scaleY = float32 image.Height / float32 newHeight
 
-    let resizedPixels = Array.create (newWidth * newHeight) 0uy
+    let buffer = Array.create (newWidth * newHeight) 0uy
 
     for newY = 0 to newHeight - 1 do
 
@@ -111,16 +116,16 @@ let resizeCPUBilinear (image: MyImage) (newWidth: int) (newHeight: int) =
 
             let resizedIndex = newY * newWidth + newX
 
-            resizedPixels[resizedIndex] <- byte newWeight
+            buffer[resizedIndex] <- byte newWeight
 
-    MyImage(resizedPixels, newWidth, newHeight, image.Name, image.Extension)
+    MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)
 
 let resizeCPUNearestNeighbour (image: MyImage) (newWidth: int) (newHeight: int) =
 
     let scaleX = float image.Width / float newWidth
     let scaleY = float image.Height / float newHeight
 
-    let resizedPixels = Array.create (newWidth * newHeight) 0uy
+    let buffer = Array.create (newWidth * newHeight) 0uy
 
     for newY = 0 to newHeight - 1 do
         let originalY = int (float newY * scaleY)
@@ -129,6 +134,20 @@ let resizeCPUNearestNeighbour (image: MyImage) (newWidth: int) (newHeight: int) 
             let originalX = int (float newX * scaleX)
             let originalIndex = originalY * image.Width + originalX
             let resizedIndex = newY * newWidth + newX
-            resizedPixels[resizedIndex] <- image.Data[originalIndex]
+            buffer[resizedIndex] <- image.Data[originalIndex]
 
-    MyImage(resizedPixels, newWidth, newHeight, image.Name, image.Extension)
+    MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)
+
+let cropCPU (image: MyImage) (x: int) (y: int) (newWidth: int) (newHeight: int) =
+
+    let buffer = Array.create (newWidth * newHeight) 0uy
+
+    for row = 0 to newHeight - 1 do
+        for column = 0 to newWidth - 1 do
+
+            let originalX = x + column
+            let originalY = y + row
+
+            buffer[row * image.Width + column] <- image.Data[originalY * newWidth + originalX]
+
+    MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)

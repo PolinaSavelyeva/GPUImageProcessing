@@ -14,7 +14,9 @@
         <Content Include="Images\input\3.jpg" />
         <Content Include="Images\input\4.jpg" />
         <Folder Include="Images\output\" />
-        <Compile Include="GPU.fs" />
+        <Compile Include="Rotation.fs" />
+        <Compile Include="Flip.fs" />
+        <Compile Include="SaveAs.fs" />
         <Compile Include="Main.fs" />
     </ItemGroup>
     <ItemGroup>
