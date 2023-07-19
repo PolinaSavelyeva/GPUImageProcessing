@@ -21,7 +21,7 @@ let applyFilter (clContext: ClContext) (localWorkSize: int) =
             clContext.CreateClArray<byte>(image.Data, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
 
         let output =
-            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly, allocationMode = AllocationMode.Default)
+            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly)
 
         let filterDiameter = (Array2D.length1 filter) / 2
         let filter = Helper.toFlatArray filter
@@ -60,23 +60,21 @@ let rotate (clContext: ClContext) (localWorkSize: int) =
             clContext.CreateClArray<byte>(image.Data, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
 
         let output =
-            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly, allocationMode = AllocationMode.Default)
+            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly)
 
         let weight = System.Convert.ToInt32 isClockwise
-        let clWeight = clContext.CreateClCell(weight)
 
         let result = Array.zeroCreate (image.Height * image.Width)
 
         let result =
-            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(rotateKernel queue clWeight input image.Height image.Width output, result, ch))
+            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(rotateKernel queue weight input image.Height image.Width output, result, ch))
 
-        queue.Post(Msg.CreateFreeMsg clWeight)
         queue.Post(Msg.CreateFreeMsg input)
         queue.Post(Msg.CreateFreeMsg output)
 
         BasicTools.MyImage(result, image.Height, image.Width, image.Name, image.Extension)
 
-// <summary>
+/// <summary>
 /// Flips the image vertically or horizontally using GPU.
 /// </summary>
 /// <param name="clContext">The representation of OpenCL context.</param>
@@ -96,41 +94,59 @@ let flip (clContext: ClContext) (localWorkSize: int) =
             clContext.CreateClArray<byte>(image.Data, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
 
         let output =
-            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly, allocationMode = AllocationMode.Default)
+            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly)
 
         let weight = System.Convert.ToInt32 isVertical
-        let clWeight = clContext.CreateClCell(weight)
 
         let result = Array.zeroCreate (image.Height * image.Width)
 
         let result =
-            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(flipKernel queue clWeight input image.Height image.Width output, result, ch))
+            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(flipKernel queue weight input image.Height image.Width output, result, ch))
 
-        queue.Post(Msg.CreateFreeMsg clWeight)
         queue.Post(Msg.CreateFreeMsg input)
         queue.Post(Msg.CreateFreeMsg output)
 
         BasicTools.MyImage(result, image.Width, image.Height, image.Name, image.Extension)
 
+/// <summary>
+/// Algorithms for resize function. The way the modified image will be formed.
+/// </summary>
+type ResizeAlgorithm =
+    | Bilinear
+    | NearestNeighbour
+
+/// <summary>
+/// Resizes the image to the specified width and height using GPU.
+/// </summary>
+/// <param name="clContext">The representation of OpenCL context.</param>
+/// <param name="localWorkSize">The size of the local work group.</param>
+/// <returns>
+/// A function that takes the new width, new height, resize parameter and an image, and asynchronously resizes the image using the GPU.
+/// </returns>
 let resize (clContext: ClContext) (localWorkSize: int) =
 
-    let flipKernel = GPUKernels.resize clContext localWorkSize
+    let resizeKernel = GPUKernels.resize clContext localWorkSize
     let queue = clContext.QueueProvider.CreateQueue()
 
-    fun newWidth newHeight (image: BasicTools.MyImage) ->
+    fun (newWidth: int) (newHeight: int) (algorithm: ResizeAlgorithm) (image: BasicTools.MyImage) ->
 
         let input =
             clContext.CreateClArray<byte>(image.Data, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
 
         let output =
-            clContext.CreateClArray(image.Height * image.Width, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly, allocationMode = AllocationMode.Default)
+            clContext.CreateClArray(newWidth * newHeight, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly)
 
         let result = Array.zeroCreate (newWidth * newHeight)
 
+        let weight =
+            match algorithm with
+            | Bilinear -> 1
+            | NearestNeighbour -> 0
+
         let result =
-            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(flipKernel queue input image.Height image.Width newWidth newHeight output, result, ch))
+            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(resizeKernel queue input image.Width image.Height newWidth newHeight weight output, result, ch))
 
         queue.Post(Msg.CreateFreeMsg input)
         queue.Post(Msg.CreateFreeMsg output)
 
-        BasicTools.MyImage(result, image.Width, image.Height, image.Name, image.Extension)
+        BasicTools.MyImage(result, newWidth, newHeight, image.Name, image.Extension)

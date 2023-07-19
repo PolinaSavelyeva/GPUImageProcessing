@@ -69,3 +69,66 @@ let flipCPU (isVertical: bool) (image: MyImage) =
             buffer[pw + ph * image.Width] <- image.Data[j + i * image.Width]
 
     MyImage(buffer, image.Width, image.Height, image.Name, image.Extension)
+
+let resizeCPUBilinear (image: MyImage) (newWidth: int) (newHeight: int) =
+
+    let scaleX = float32 image.Width / float32 newWidth
+    let scaleY = float32 image.Height / float32 newHeight
+
+    let resizedPixels = Array.create (newWidth * newHeight) 0uy
+
+    for newY = 0 to newHeight - 1 do
+
+        let positionY = float32 newY * scaleY
+        let y1 = int positionY
+        let y2 = if y1 + 1 < image.Height then y1 + 1 else y1
+
+        for newX = 0 to newWidth - 1 do
+
+            let positionX = float32 newX * scaleX
+            let x1 = int positionX
+            let x2 = if x1 + 1 < image.Width then x1 + 1 else x1
+
+            let weightBottom =
+                if x2 = x1 then
+                    float32 image.Data[y1 * image.Width + x1]
+                else
+                    (float32 image.Data[y1 * image.Width + x2]) * (positionX - float32 x1)
+                    + (float32 image.Data[y1 * image.Width + x1]) * (float32 x2 - positionX)
+
+            let weightTop =
+                if x1 = x2 then
+                    float32 image.Data[y2 * image.Width + x2]
+                else
+                    (float32 image.Data[y2 * image.Width + x2]) * (positionX - float32 x1)
+                    + (float32 image.Data[y2 * image.Width + x1]) * (float32 x2 - positionX)
+
+            let newWeight =
+                if y1 = y2 then
+                    weightBottom
+                else
+                    weightBottom * (positionY - float32 y1) + weightTop * (float32 y2 - positionY)
+
+            let resizedIndex = newY * newWidth + newX
+
+            resizedPixels[resizedIndex] <- byte newWeight
+
+    MyImage(resizedPixels, newWidth, newHeight, image.Name, image.Extension)
+
+let resizeCPUNearestNeighbour (image: MyImage) (newWidth: int) (newHeight: int) =
+
+    let scaleX = float image.Width / float newWidth
+    let scaleY = float image.Height / float newHeight
+
+    let resizedPixels = Array.create (newWidth * newHeight) 0uy
+
+    for newY = 0 to newHeight - 1 do
+        let originalY = int (float newY * scaleY)
+
+        for newX = 0 to newWidth - 1 do
+            let originalX = int (float newX * scaleX)
+            let originalIndex = originalY * image.Width + originalX
+            let resizedIndex = newY * newWidth + newX
+            resizedPixels[resizedIndex] <- image.Data[originalIndex]
+
+    MyImage(resizedPixels, newWidth, newHeight, image.Name, image.Extension)
