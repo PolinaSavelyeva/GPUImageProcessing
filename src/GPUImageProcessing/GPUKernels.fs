@@ -2,6 +2,7 @@ module GPUKernels
 
 open Brahma.FSharp
 
+
 /// <summary>
 /// Creates compiled GPU filter kernel.
 /// </summary>
@@ -145,26 +146,26 @@ let resize (clContext: ClContext) localWorkSize =
                 if newY < newHeight then
                     let positionX = float32 newX * scaleX
                     let positionY = float32 newY * scaleY
-                    let x1 = int positionX
-                    let y1 = int positionY
+                    let x1 = newX * imageWidth / newWidth
+                    let y1 = newY * imageHeight / newHeight
 
                     if weight = 1 then
                         let x2 = if x1 + 1 < imageWidth then x1 + 1 else x1
                         let y2 = if y1 + 1 < imageHeight then y1 + 1 else y1
 
                         let weightBottom =
-                            if x2 = x1 then
-                                float32 image[y1 * imageWidth + x1]
-                            else
-                                (float32 image[y1 * imageWidth + x2]) * (positionX - float32 x1)
-                                + (float32 image[y1 * imageWidth + x1]) * (float32 x2 - positionX)
-
-                        let weightTop =
                             if x1 = x2 then
-                                float32 image[y2 * imageWidth + x2]
+                                float32 image[y2 * imageWidth + x1]
                             else
                                 (float32 image[y2 * imageWidth + x2]) * (positionX - float32 x1)
                                 + (float32 image[y2 * imageWidth + x1]) * (float32 x2 - positionX)
+
+                        let weightTop =
+                            if x1 = x2 then
+                                float32 image[y1 * imageWidth + x2]
+                            else
+                                (float32 image[y1 * imageWidth + x2]) * (positionX - float32 x1)
+                                + (float32 image[y1 * imageWidth + x1]) * (float32 x2 - positionX)
 
                         let newWeight =
                             if y1 = y2 then
@@ -172,10 +173,19 @@ let resize (clContext: ClContext) localWorkSize =
                             else
                                 weightBottom * (positionY - float32 y1) + weightTop * (float32 y2 - positionY)
 
-                        result[p] <- byte newWeight
-                    else if x1 < imageWidth && y1 < imageHeight then
+                        if
+                            p < newWidth * newHeight
+                            && x1 < imageWidth
+                            && y1 < imageHeight
+                            && x2 < imageWidth
+                            && y2 < imageHeight
+                        then
+                            result[p] <- byte (int newWeight)
+                    elif x1 < imageWidth && y1 < imageHeight then
                         let originalIndex = y1 * imageWidth + x1
-                        result[p] <- image[originalIndex]
+
+                        if p < newWidth * newHeight && originalIndex < imageWidth * imageHeight then
+                            result[p] <- image[originalIndex]
         @>
 
     let kernel = clContext.Compile kernel

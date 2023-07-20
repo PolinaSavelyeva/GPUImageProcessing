@@ -9,6 +9,12 @@ type Kernel =
 
     new(data, length) = { Data = data; Length = length }
 
+type ImageDimensions =
+    val Height: int
+    val Width: int
+
+    new(height, width) = { Height = height; Width = width }
+
 let generateUniqueFileName (extension: string) =
 
     let time = DateTime.Now.ToString("yyyyMMdd_HHmmss")
@@ -32,9 +38,19 @@ let kernelGen =
         let! length = Gen.elements [ 1; 3; 5 ]
 
         let! data = Gen.array2DOfDim (length, length) (Gen.elements [ -255f .. 255f ])
+
         return! Gen.constant (Kernel(data, length))
     }
 
+let imageDimensionsGEn =
+    gen {
+        let! height = Gen.choose (1, 200)
+        let! width = Gen.choose (1, 200)
+
+        return! Gen.constant (ImageDimensions(height, width))
+    }
+
 type MyGenerators =
-    static member MyImage() = Arb.fromGen myImageGen
-    static member Kernel() = Arb.fromGen kernelGen
+    static member MyGeneratedImage() = Arb.fromGen myImageGen
+    static member GeneratedKernel() = Arb.fromGen kernelGen
+    static member GeneratedDimension() = Arb.fromGen imageDimensionsGEn

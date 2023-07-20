@@ -91,22 +91,23 @@ let resizeCPUBilinear (image: MyImage) (newWidth: int) (newHeight: int) =
         for newX = 0 to newWidth - 1 do
 
             let positionX = float32 newX * scaleX
+
             let x1 = int positionX
             let x2 = if x1 + 1 < image.Width then x1 + 1 else x1
 
             let weightBottom =
-                if x2 = x1 then
-                    float32 image.Data[y1 * image.Width + x1]
-                else
-                    (float32 image.Data[y1 * image.Width + x2]) * (positionX - float32 x1)
-                    + (float32 image.Data[y1 * image.Width + x1]) * (float32 x2 - positionX)
-
-            let weightTop =
                 if x1 = x2 then
-                    float32 image.Data[y2 * image.Width + x2]
+                    float32 image.Data[y2 * image.Width + x1]
                 else
                     (float32 image.Data[y2 * image.Width + x2]) * (positionX - float32 x1)
                     + (float32 image.Data[y2 * image.Width + x1]) * (float32 x2 - positionX)
+
+            let weightTop =
+                if x1 = x2 then
+                    float32 image.Data[y1 * image.Width + x2]
+                else
+                    (float32 image.Data[y1 * image.Width + x2]) * (positionX - float32 x1)
+                    + (float32 image.Data[y1 * image.Width + x1]) * (float32 x2 - positionX)
 
             let newWeight =
                 if y1 = y2 then
@@ -116,22 +117,22 @@ let resizeCPUBilinear (image: MyImage) (newWidth: int) (newHeight: int) =
 
             let resizedIndex = newY * newWidth + newX
 
-            buffer[resizedIndex] <- byte newWeight
+            buffer[resizedIndex] <- byte (int newWeight)
 
     MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)
 
 let resizeCPUNearestNeighbour (image: MyImage) (newWidth: int) (newHeight: int) =
 
-    let scaleX = float image.Width / float newWidth
-    let scaleY = float image.Height / float newHeight
+    let scaleX = float32 image.Width / float32 newWidth
+    let scaleY = float32 image.Height / float32 newHeight
 
     let buffer = Array.create (newWidth * newHeight) 0uy
 
     for newY = 0 to newHeight - 1 do
-        let originalY = int (float newY * scaleY)
+        let originalY = int (float32 newY * scaleY)
 
         for newX = 0 to newWidth - 1 do
-            let originalX = int (float newX * scaleX)
+            let originalX = int (float32 newX * scaleX)
             let originalIndex = originalY * image.Width + originalX
             let resizedIndex = newY * newWidth + newX
             buffer[resizedIndex] <- image.Data[originalIndex]

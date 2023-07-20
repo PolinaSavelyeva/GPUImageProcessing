@@ -15,8 +15,10 @@
         <Content Include="Images\input\4.jpg" />
         <Folder Include="Images\output\" />
         <Compile Include="Rotation.fs" />
+        <Compile Include="Filter.fs" />
         <Compile Include="Flip.fs" />
         <Compile Include="SaveAs.fs" />
+        <Compile Include="Resize.fs" />
         <Compile Include="Main.fs" />
     </ItemGroup>
     <ItemGroup>
