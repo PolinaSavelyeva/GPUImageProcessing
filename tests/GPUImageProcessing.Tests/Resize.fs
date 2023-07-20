@@ -81,7 +81,7 @@ let tests =
               let newWidth = 975
               let newHeight = 632
 
-              let expectedResult = resizeCPUNearestNeighbour myImage3 newWidth newHeight
+              let expectedResult = resizeCPUNearestNeighbour newWidth newHeight myImage3
               let actualResult = resize newWidth newHeight GPUTools.NearestNeighbour myImage3
 
               Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. "
@@ -92,7 +92,7 @@ let tests =
               let newWidth = dimensions.Width
               let newHeight = dimensions.Height
 
-              let expectedResult = resizeCPUNearestNeighbour myImage newWidth newHeight
+              let expectedResult = resizeCPUNearestNeighbour newWidth newHeight myImage
               let actualResult = resize newWidth newHeight GPUTools.NearestNeighbour myImage
 
               Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. " ]

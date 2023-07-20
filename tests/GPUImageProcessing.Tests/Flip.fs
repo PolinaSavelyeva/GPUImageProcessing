@@ -12,20 +12,20 @@ let tests =
         [ testCase "Two vertical MyImage flips is equal to the original on GPU"
           <| fun _ ->
 
-              let result = myImage3 |> flip true |> flip true
-
-              Expect.equal result.Data myImage3.Data $"Unexpected: %A{result.Data}.\n Expected: %A{myImage3.Data}. "
-              Expect.equal result.Height myImage3.Height $"Unexpected: %A{result.Height}.\n Expected: %A{myImage3.Height}. "
-              Expect.equal result.Width myImage3.Width $"Unexpected: %A{result.Width}.\n Expected: %A{myImage3.Width}. "
-
-          testCase "Two horizontal MyImage flips is equal to the original on GPU"
-          <| fun _ ->
-
-              let result = myImage4 |> flip false |> flip false
+              let result = myImage4 |> flip true |> flip true
 
               Expect.equal result.Data myImage4.Data $"Unexpected: %A{result.Data}.\n Expected: %A{myImage4.Data}. "
               Expect.equal result.Height myImage4.Height $"Unexpected: %A{result.Height}.\n Expected: %A{myImage4.Height}. "
               Expect.equal result.Width myImage4.Width $"Unexpected: %A{result.Width}.\n Expected: %A{myImage4.Width}. "
+
+          testCase "Two horizontal MyImage flips is equal to the original on GPU"
+          <| fun _ ->
+
+              let result = myImage2 |> flip false |> flip false
+
+              Expect.equal result.Data myImage2.Data $"Unexpected: %A{result.Data}.\n Expected: %A{myImage2.Data}. "
+              Expect.equal result.Height myImage2.Height $"Unexpected: %A{result.Height}.\n Expected: %A{myImage2.Height}. "
+              Expect.equal result.Width myImage2.Width $"Unexpected: %A{result.Width}.\n Expected: %A{myImage2.Width}. "
 
           testPropertyWithConfig myConfig "Two vertical/horizontal MyImage flips is equal to the original on generated MyImage on GPU"
           <| fun myImage ->

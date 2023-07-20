@@ -35,7 +35,7 @@ let tests =
               let xUpper, yUpper = 123, 300
               let xLower, yLower = 125, 350
 
-              let expectedResult = cropCPU myImage3 (xUpper, yUpper) (xLower, yLower)
+              let expectedResult = cropCPU (xUpper, yUpper) (xLower, yLower) myImage3
               let actualResult = crop (xUpper, yUpper) (xLower, yLower) myImage3
 
               Expect.equal expectedResult.Data actualResult.Data $"Unexpected: %A{expectedResult.Data}.\n Expected: %A{actualResult.Data}. "
@@ -50,11 +50,11 @@ let tests =
 
               if xLower > myImage.Width || yLower > myImage.Height then
 
-                  Expect.throws (fun _ -> cropCPU myImage (xUpper, yUpper) (xLower, yLower) |> ignore) "Corner points coordinates are out of the image."
+                  Expect.throws (fun _ -> cropCPU (xUpper, yUpper) (xLower, yLower) myImage |> ignore) "Corner points coordinates are out of the image."
                   Expect.throws (fun _ -> crop (xUpper, yUpper) (xLower, yLower) myImage |> ignore) "Corner points coordinates are out of the image."
               else
 
-                  let expectedResult = cropCPU myImage (xUpper, yUpper) (xLower, yLower)
+                  let expectedResult = cropCPU (xUpper, yUpper) (xLower, yLower) myImage
                   let actualResult = crop (xUpper, yUpper) (xLower, yLower) myImage
 
                   Expect.equal expectedResult.Data actualResult.Data $"Unexpected: %A{expectedResult.Data}.\n Expected: %A{actualResult.Data}. "

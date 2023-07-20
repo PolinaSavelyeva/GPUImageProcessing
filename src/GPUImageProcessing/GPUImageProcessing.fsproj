@@ -22,7 +22,6 @@
         <Compile Include="GPUKernels.fs" />
         <Compile Include="GPUTools.fs" />
         <Compile Include="FilterKernels.fs" />
-        <Compile Include="CPU.fs" />
         <Compile Include="Agents.fs" />
         <Compile Include="Processing.fs" />
         <Compile Include="ArguCommands.fs" />

@@ -4,10 +4,10 @@ open BasicTools
 open Expecto
 
 let src = __SOURCE_DIRECTORY__
-let myImage1 = load (src + "/Images/input/1.jpg")
-let myImage2 = load (src + "/Images/input/2.jpg")
-let myImage3 = load (src + "/Images/input/3.jpg")
-let myImage4 = load (src + "/Images/input/4.jpg")
+let myImage1 = load <| System.IO.Path.Combine(src, "Images", "input", "1.jpg")
+let myImage2 = load <| System.IO.Path.Combine(src, "Images", "input", "2.jpg")
+let myImage3 = load <| System.IO.Path.Combine(src, "Images", "input", "3.jpg")
+let myImage4 = load <| System.IO.Path.Combine(src, "Images", "input", "4.jpg")
 
 let device = Brahma.FSharp.ClDevice.GetFirstAppropriateDevice()
 let clContext = Brahma.FSharp.ClContext(device)
@@ -26,7 +26,6 @@ let applyFilterCPU filter (image: MyImage) =
     let pixelProcessing p =
 
         let pw = p % image.Width
-
         let ph = p / image.Width
 
         let dataToHandle =
@@ -51,7 +50,6 @@ let rotateCPU (isClockwise: bool) (image: MyImage) =
         for i in 0 .. image.Height - 1 do
 
             let pw = j * weight + (image.Width - 1 - j) * (1 - weight)
-
             let ph = i * (1 - weight) + (image.Height - 1 - i) * weight
 
             buffer[ph + pw * image.Height] <- image.Data[j + i * image.Width]
@@ -75,7 +73,10 @@ let flipCPU (isVertical: bool) (image: MyImage) =
 
     MyImage(buffer, image.Width, image.Height, image.Name, image.Extension)
 
-let resizeCPUBilinear (image: MyImage) (newWidth: int) (newHeight: int) =
+let resizeCPUBilinear (newWidth: int) (newHeight: int) (image: MyImage) =
+
+    if newWidth <= 0 || newHeight <= 0 then
+        failwith $"Expected positive new sides, but given newWidth = %A{newWidth} and newHeight = %A{newHeight}. "
 
     let scaleX = float32 image.Width / float32 newWidth
     let scaleY = float32 image.Height / float32 newHeight
@@ -121,7 +122,10 @@ let resizeCPUBilinear (image: MyImage) (newWidth: int) (newHeight: int) =
 
     MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)
 
-let resizeCPUNearestNeighbour (image: MyImage) (newWidth: int) (newHeight: int) =
+let resizeCPUNearestNeighbour (newWidth: int) (newHeight: int) (image: MyImage) =
+
+    if newWidth <= 0 || newHeight <= 0 then
+        failwith $"Expected positive new sides, but given newWidth = %A{newWidth} and newHeight = %A{newHeight}. "
 
     let scaleX = float32 image.Width / float32 newWidth
     let scaleY = float32 image.Height / float32 newHeight
@@ -135,11 +139,12 @@ let resizeCPUNearestNeighbour (image: MyImage) (newWidth: int) (newHeight: int) 
             let originalX = int (float32 newX * scaleX)
             let originalIndex = originalY * image.Width + originalX
             let resizedIndex = newY * newWidth + newX
+
             buffer[resizedIndex] <- image.Data[originalIndex]
 
     MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)
 
-let cropCPU (image: MyImage) (xUpper, yUpper) (xLower, yLower) =
+let cropCPU (xUpper, yUpper) (xLower, yLower) (image: MyImage) =
 
     if xUpper = xLower || yUpper = yLower then
         failwith
@@ -162,3 +167,35 @@ let cropCPU (image: MyImage) (xUpper, yUpper) (xLower, yLower) =
             buffer[y * newWidth + x] <- image.Data[(y + yUpper) * image.Width + (x + xUpper)]
 
     MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)
+
+let watermarkCPU (watermark: MyImage) (watermarkScale: float) (image: MyImage) =
+
+    if watermarkScale <= 0 then
+        failwith $"Expected positive watermark scale, but given %A{watermarkScale}. "
+
+    let imageCenterX = image.Width / 2
+    let imageCenterY = image.Height / 2
+
+    let watermarkWidth = int (float watermark.Width / watermarkScale)
+    let watermarkHeight = int (float watermark.Height / watermarkScale)
+
+    let watermarkCenterX = watermarkWidth / 2
+    let watermarkCenterY = watermarkHeight / 2
+
+    let resizedWatermark =
+        resizeCPUNearestNeighbour watermarkWidth watermarkHeight watermark
+
+    let buffer = image.Data
+
+    for y in 0 .. watermarkHeight - 1 do
+        let distanceY = y - watermarkCenterY
+
+        for x in 0 .. watermarkWidth - 1 do
+
+            let distanceX = x - watermarkCenterX
+            let index = (imageCenterY + distanceY) * image.Width + (imageCenterX + distanceX)
+
+            if index < image.Height * image.Width && index >= 0 then
+                buffer[index] <- resizedWatermark.Data[y * watermarkWidth + x]
+
+    MyImage(buffer, image.Width, image.Height, image.Name, image.Extension)

@@ -48,7 +48,7 @@ let load (filePath: string) =
 /// <param name="directoryPath">Path to the directory where the image will be saved.</param>
 let save (image: MyImage) directoryPath =
 
-    let filePath = directoryPath + "/" + image.Name + image.Extension
+    let filePath = System.IO.Path.Combine(directoryPath, image.Name + image.Extension)
     let image = Image.LoadPixelData<L8>(image.Data, image.Width, image.Height)
 
     image.Save filePath

@@ -19,14 +19,14 @@ let applyFilter (clContext: ClContext) localWorkSize =
         <@
             fun (range: Range1D) (image: ClArray<byte>) imageWidth imageHeight (filter: ClArray<float32>) filterDiameter (result: ClArray<byte>) ->
                 let p = range.GlobalID0
-                let pw = p % imageWidth
-                let ph = p / imageWidth
+                let py = p % imageWidth
+                let px = p / imageWidth
                 let mutable res = 0.0f
 
-                for i in ph - filterDiameter .. ph + filterDiameter do
-                    for j in pw - filterDiameter .. pw + filterDiameter do
+                for i in px - filterDiameter .. px + filterDiameter do
+                    for j in py - filterDiameter .. py + filterDiameter do
                         let f =
-                            filter[(i - ph + filterDiameter) * (2 * filterDiameter + 1) + (j - pw + filterDiameter)]
+                            filter[(i - px + filterDiameter) * (2 * filterDiameter + 1) + (j - py + filterDiameter)]
 
                         if i < 0 || i >= imageHeight || j < 0 || j >= imageWidth then
                             res <- res + (float32 image[p]) * f
@@ -64,12 +64,12 @@ let rotate (clContext: ClContext) localWorkSize =
         <@
             fun (range: Range1D) (image: ClArray<byte>) imageWidth imageHeight weight (result: ClArray<byte>) ->
                 let p = range.GlobalID0
-                let i = p / imageWidth
-                let j = p % imageWidth
+                let py = p / imageWidth
+                let px = p % imageWidth
 
-                if i < imageHeight then
-                    let pw = j * weight + (imageWidth - 1 - j) * (1 - weight)
-                    let ph = i * (1 - weight) + (imageHeight - 1 - i) * weight
+                if py < imageHeight then
+                    let pw = px * weight + (imageWidth - 1 - px) * (1 - weight)
+                    let ph = py * (1 - weight) + (imageHeight - 1 - py) * weight
                     result[ph + pw * imageHeight] <- image[p]
         @>
 
@@ -101,12 +101,12 @@ let flip (clContext: ClContext) localWorkSize =
         <@
             fun (range: Range1D) (image: ClArray<byte>) imageWidth imageHeight weight (result: ClArray<byte>) ->
                 let p = range.GlobalID0
-                let i = p / imageWidth
-                let j = p % imageWidth
+                let py = p / imageWidth
+                let px = p % imageWidth
 
-                if i < imageHeight then
-                    let pw = (imageWidth - j - 1) * weight + j * (1 - weight)
-                    let ph = i * weight + (imageHeight - i - 1) * (1 - weight)
+                if py < imageHeight then
+                    let pw = (imageWidth - px - 1) * weight + px * (1 - weight)
+                    let ph = py * weight + (imageHeight - py - 1) * (1 - weight)
                     result[pw + ph * imageWidth] <- image[p]
         @>
 
@@ -137,52 +137,52 @@ let resize (clContext: ClContext) localWorkSize =
     let kernel =
         <@
             fun (range: Range1D) (image: ClArray<byte>) imageWidth imageHeight newWidth newHeight weight (result: ClArray<byte>) ->
+                let p = range.GlobalID0
+                let py = p / newWidth
+                let px = p % newWidth
                 let scaleX = float32 imageWidth / float32 newWidth
                 let scaleY = float32 imageHeight / float32 newHeight
-                let p = range.GlobalID0
-                let newY = p / newWidth
-                let newX = p % newWidth
 
-                if newY < newHeight then
-                    let positionX = float32 newX * scaleX
-                    let positionY = float32 newY * scaleY
-                    let x1 = newX * imageWidth / newWidth
-                    let y1 = newY * imageHeight / newHeight
+                if py < newHeight then
+                    let scaledX = float32 px * scaleX
+                    let scaledY = float32 py * scaleY
+                    let xLower = px * imageWidth / newWidth
+                    let yLower = py * imageHeight / newHeight
 
                     if weight = 1 then
-                        let x2 = if x1 + 1 < imageWidth then x1 + 1 else x1
-                        let y2 = if y1 + 1 < imageHeight then y1 + 1 else y1
+                        let xUpper = if xLower + 1 < imageWidth then xLower + 1 else xLower
+                        let yUpper = if yLower + 1 < imageHeight then yLower + 1 else yLower
 
                         let weightBottom =
-                            if x1 = x2 then
-                                float32 image[y2 * imageWidth + x1]
+                            if xLower = xUpper then
+                                float32 image[yUpper * imageWidth + xLower]
                             else
-                                (float32 image[y2 * imageWidth + x2]) * (positionX - float32 x1)
-                                + (float32 image[y2 * imageWidth + x1]) * (float32 x2 - positionX)
+                                (float32 image[yUpper * imageWidth + xUpper]) * (scaledX - float32 xLower)
+                                + (float32 image[yUpper * imageWidth + xLower]) * (float32 xUpper - scaledX)
 
                         let weightTop =
-                            if x1 = x2 then
-                                float32 image[y1 * imageWidth + x2]
+                            if xLower = xUpper then
+                                float32 image[yLower * imageWidth + xUpper]
                             else
-                                (float32 image[y1 * imageWidth + x2]) * (positionX - float32 x1)
-                                + (float32 image[y1 * imageWidth + x1]) * (float32 x2 - positionX)
+                                (float32 image[yLower * imageWidth + xUpper]) * (scaledX - float32 xLower)
+                                + (float32 image[yLower * imageWidth + xLower]) * (float32 xUpper - scaledX)
 
                         let newWeight =
-                            if y1 = y2 then
+                            if yLower = yUpper then
                                 weightBottom
                             else
-                                weightBottom * (positionY - float32 y1) + weightTop * (float32 y2 - positionY)
+                                weightBottom * (scaledY - float32 yLower) + weightTop * (float32 yUpper - scaledY)
 
                         if
                             p < newWidth * newHeight
-                            && x1 < imageWidth
-                            && y1 < imageHeight
-                            && x2 < imageWidth
-                            && y2 < imageHeight
+                            && xLower < imageWidth
+                            && yLower < imageHeight
+                            && xUpper < imageWidth
+                            && yUpper < imageHeight
                         then
                             result[p] <- byte (int newWeight)
-                    elif x1 < imageWidth && y1 < imageHeight then
-                        let originalIndex = y1 * imageWidth + x1
+                    elif xLower < imageWidth && yLower < imageHeight then
+                        let originalIndex = yLower * imageWidth + xLower
 
                         if p < newWidth * newHeight && originalIndex < imageWidth * imageHeight then
                             result[p] <- image[originalIndex]
@@ -217,24 +217,64 @@ let crop (clContext: ClContext) localWorkSize =
         <@
             fun (range: Range1D) (image: ClArray<byte>) imageWidth newWidth newHeight xUpper yUpper (result: ClArray<byte>) ->
                 let p = range.GlobalID0
-                let i = p / newWidth
-                let j = p % newWidth
+                let py = p / newWidth
+                let px = p % newWidth
 
-                if i < newHeight then
-                    result[p] <- image[(i + yUpper) * imageWidth + (xUpper + j)]
+                if py < newHeight then
+                    result[p] <- image[(py + yUpper) * imageWidth + (xUpper + px)]
         @>
 
     let kernel = clContext.Compile kernel
 
-    fun (commandQueue: MailboxProcessor<Msg>) (image: ClArray<byte>) imageWidth imageHeight xUpper yUpper xLower yLower (result: ClArray<byte>) ->
-
-        let newWidth = xLower - xUpper + 1
-        let newHeight = yLower - yUpper + 1
+    fun (commandQueue: MailboxProcessor<Msg>) (image: ClArray<byte>) imageWidth newWidth newHeight xUpper yUpper (result: ClArray<byte>) ->
 
         let ndRange = Range1D.CreateValid(newWidth * newHeight, localWorkSize)
         let kernel = kernel.GetKernel()
 
         commandQueue.Post(Msg.MsgSetArguments(fun () -> kernel.KernelFunc ndRange image imageWidth newWidth newHeight xUpper yUpper result))
+        commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
+
+        result
+
+/// <summary>
+/// Creates compiled GPU watermark kernel.
+/// </summary>
+/// <param name="clContext">The representation of OpenCL context.</param>
+/// <param name="localWorkSize">The size of the local work group.</param>
+/// <returns>
+/// A function that takes the watermark data as image, the original width and height of the image,
+/// the coordinates of the center of the image,
+/// the coordinates of the center of the watermark,
+/// the width and height of the watermark,
+/// and asynchronously applies the watermark to the image using the GPU.
+/// The resulting image data is stored in the result array.
+/// </returns>
+let watermark (clContext: ClContext) localWorkSize =
+
+    let kernel =
+        <@
+            fun (range: Range1D) (watermark: ClArray<byte>) imageWidth imageHeight imageCenterX imageCenterY watermarkCenterX watermarkCenterY watermarkWidth (result: ClArray<byte>) ->
+                let p = range.GlobalID0
+                let py = p / watermarkWidth
+                let px = p % watermarkWidth
+                let centerDistanceY = py - watermarkCenterY
+                let centerDistanceX = px - watermarkCenterX
+
+                let index =
+                    (imageCenterY + centerDistanceY) * imageWidth + (imageCenterX + centerDistanceX)
+
+                if py < imageHeight && index < imageHeight * imageWidth && index >= 0 then
+                    result[index] <- watermark[p]
+        @>
+
+    let kernel = clContext.Compile kernel
+
+    fun (commandQueue: MailboxProcessor<Msg>) (watermark: ClArray<byte>) imageWidth imageHeight imageCenterX imageCenterY watermarkCenterX watermarkCenterY watermarkWidth watermarkHeight (result: ClArray<byte>) ->
+
+        let ndRange = Range1D.CreateValid(watermarkWidth * watermarkHeight, localWorkSize)
+        let kernel = kernel.GetKernel()
+
+        commandQueue.Post(Msg.MsgSetArguments(fun () -> kernel.KernelFunc ndRange watermark imageWidth imageHeight imageCenterX imageCenterY watermarkCenterX watermarkCenterY watermarkWidth result))
         commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
 
         result
