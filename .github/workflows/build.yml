@@ -22,13 +22,33 @@ jobs:
         if: runner.os != 'Windows'
         run: |
           chmod +x ./build.sh
-          ./build.sh
+          ./build.sh DotnetBuild
         env:
           CI: true
           ENABLE_COVERAGE: true
       - name: Build via Windows
         if: runner.os == 'Windows'
-        run: ./build.cmd
+        run: ./build.cmd DotnetBuild
         env:
           CI: true
           ENABLE_COVERAGE: true
+    test:
+        strategy:
+            matrix:
+                os: [self-hosted]
+        runs-on: ${{ matrix.os }}
+        
+        steps:
+            - uses: actions/checkout@v2
+            - name: Test
+              if: runner.os != 'Windows'
+              run: |
+                  chmod +x ./build.sh
+                  ./build.sh DotnetTest
+              env:
+                  CI: true
+            - name: Test
+              if: runner.os == 'Windows'
+              run: ./build.cmd DotnetTest
+              env:
+                  CI: true
