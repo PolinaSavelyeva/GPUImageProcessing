@@ -139,16 +139,26 @@ let resizeCPUNearestNeighbour (image: MyImage) (newWidth: int) (newHeight: int) 
 
     MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)
 
-let cropCPU (image: MyImage) (x: int) (y: int) (newWidth: int) (newHeight: int) =
+let cropCPU (image: MyImage) (xUpper, yUpper) (xLower, yLower) =
+
+    if xUpper = xLower || yUpper = yLower then
+        failwith
+            $"Unequal corner points coordinates were expected, a zero-length image cannot be produced.\n
+                   Expected xUpper = %A{xUpper} <> xLower = %A{xLower} and yUpper = %A{yUpper} <> yLower = %A{yLower}. "
+
+    if xLower >= image.Width || yLower >= image.Height then
+        failwith
+            $"Corner points coordinates are out of the image.\n
+                  Expected xLower = %A{xLower} < image.Width = %A{image.Width} and yLower = %A{yLower} < image.Height = %A{image.Height}. "
+
+    let newWidth = xLower - xUpper + 1
+    let newHeight = yLower - yUpper + 1
 
     let buffer = Array.create (newWidth * newHeight) 0uy
 
-    for row = 0 to newHeight - 1 do
-        for column = 0 to newWidth - 1 do
+    for y = 0 to newHeight - 1 do
+        for x = 0 to newWidth - 1 do
 
-            let originalX = x + column
-            let originalY = y + row
-
-            buffer[row * image.Width + column] <- image.Data[originalY * newWidth + originalX]
+            buffer[y * newWidth + x] <- image.Data[(y + yUpper) * image.Width + (x + xUpper)]
 
     MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)

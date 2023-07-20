@@ -150,3 +150,48 @@ let resize (clContext: ClContext) (localWorkSize: int) =
         queue.Post(Msg.CreateFreeMsg output)
 
         BasicTools.MyImage(result, newWidth, newHeight, image.Name, image.Extension)
+
+/// <summary>
+/// Crops the image to a specified region using GPU.
+/// </summary>
+/// <param name="clContext">The representation of OpenCL context.</param>
+/// <param name="localWorkSize">The size of the local work group.</param>
+/// <returns>
+/// A function that takes the upper-left and lower-right corner coordinates of the region to be cropped,
+/// and an image, and asynchronously crops the image using the GPU.
+/// </returns>
+let crop (clContext: ClContext) (localWorkSize: int) =
+
+    let cropKernel = GPUKernels.crop clContext localWorkSize
+    let queue = clContext.QueueProvider.CreateQueue()
+
+    fun (xUpper, yUpper) (xLower, yLower) (image: BasicTools.MyImage) ->
+
+        if xUpper = xLower || yUpper = yLower then
+            failwith
+                $"Unequal corner points coordinates were expected, a zero-length image cannot be produced.\n
+            Expected xUpper = %A{xUpper} <> xLower = %A{xLower} and yUpper = %A{yUpper} <> yLower = %A{yLower}. "
+
+        if xLower >= image.Width || yLower >= image.Height then
+            failwith
+                $"Corner points coordinates are out of the image.\
+            Expected xLower = %A{xLower} < image.Width = %A{image.Width} and yLower = %A{yLower} < image.Height = %A{image.Height}. "
+
+        let input =
+            clContext.CreateClArray<byte>(image.Data, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
+
+        let newWidth = xLower - xUpper + 1
+        let newHeight = yLower - yUpper + 1
+
+        let output =
+            clContext.CreateClArray(newWidth * newHeight, HostAccessMode.NotAccessible, DeviceAccessMode.WriteOnly)
+
+        let result = Array.zeroCreate (newWidth * newHeight)
+
+        let result =
+            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(cropKernel queue input image.Width image.Height xUpper yUpper xLower yLower output, result, ch))
+
+        queue.Post(Msg.CreateFreeMsg input)
+        queue.Post(Msg.CreateFreeMsg output)
+
+        BasicTools.MyImage(result, newWidth, newHeight, image.Name, image.Extension)

@@ -10,7 +10,7 @@ type MyImage =
     val Data: array<byte>
     val Width: int
     val Height: int
-    val Name: string
+    val mutable Name: string
     val Extension: string
 
     new(data, width, height, name, extension) =
@@ -26,6 +26,8 @@ type MyImage =
         let extension = System.IO.Path.GetExtension nameWithExtension
 
         MyImage(data, width, height, name, extension)
+
+    member this.ChangeName(newName: string) = this.Name <- newName
 
 /// <summary>
 /// Loads the image located at the specified file path.
@@ -46,7 +48,7 @@ let load (filePath: string) =
 /// <param name="directoryPath">Path to the directory where the image will be saved.</param>
 let save (image: MyImage) directoryPath =
 
-    let filePath = directoryPath + image.Name + image.Extension
+    let filePath = directoryPath + "/" + image.Name + image.Extension
     let image = Image.LoadPixelData<L8>(image.Data, image.Width, image.Height)
 
     image.Save filePath

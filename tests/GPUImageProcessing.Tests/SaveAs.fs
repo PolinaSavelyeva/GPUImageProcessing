@@ -11,7 +11,7 @@ let tests =
         [ testCase "Saved real image must be of the same Png format as the specified one"
           <| fun _ ->
 
-              saveAs myImage1 Png (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Png (__SOURCE_DIRECTORY__ + "/Images/output")
 
               let pngImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.png")
 
@@ -20,7 +20,7 @@ let tests =
           testCase "Saved real image must be of the same Gif format as the specified one"
           <| fun _ ->
 
-              saveAs myImage1 Gif (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Gif (__SOURCE_DIRECTORY__ + "/Images/output")
 
               let gifImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.gif")
 
@@ -29,7 +29,7 @@ let tests =
           testCase "Saved image must be of the same Jpeg format as the specified one"
           <| fun _ ->
 
-              saveAs myImage1 Jpeg (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Jpeg (__SOURCE_DIRECTORY__ + "/Images/output")
 
               let jpegImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.jpeg")
 
@@ -38,7 +38,7 @@ let tests =
           testCase "Saved image must be of the same Bmp format as the specified one"
           <| fun _ ->
 
-              saveAs myImage1 Bmp (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Bmp (__SOURCE_DIRECTORY__ + "/Images/output")
 
               let bmpImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.bmp")
 
@@ -47,7 +47,7 @@ let tests =
           testCase "Saved image must be of the same Webp format as the specified one"
           <| fun _ ->
 
-              saveAs myImage1 Webp (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Webp (__SOURCE_DIRECTORY__ + "/Images/output")
 
               let webpImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.webp")
 
@@ -56,7 +56,7 @@ let tests =
           testCase "Saved image must be of the same Tiff format as the specified one"
           <| fun _ ->
 
-              saveAs myImage1 Tiff (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Tiff (__SOURCE_DIRECTORY__ + "/Images/output")
 
               let tiffImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.tiff")
 
@@ -65,7 +65,7 @@ let tests =
           testCase "Saved image must be of the same Tga format as the specified one"
           <| fun _ ->
 
-              saveAs myImage1 Tga (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Tga (__SOURCE_DIRECTORY__ + "/Images/output")
 
               let tgaImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.tga")
 
@@ -74,7 +74,7 @@ let tests =
           testCase "Saved image must be of the same Pbm format as the specified one"
           <| fun _ ->
 
-              saveAs myImage1 Pbm (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage1 Pbm (__SOURCE_DIRECTORY__ + "/Images/output")
 
               let pbmImage = load (__SOURCE_DIRECTORY__ + "/Images/output/1.pbm")
 
@@ -83,7 +83,7 @@ let tests =
           testPropertyWithConfig myConfig "Saved generated image must be of the format as the specified one"
           <| fun myImage (format: ImageFormats) ->
 
-              saveAs myImage format (__SOURCE_DIRECTORY__ + "/Images/output/")
+              saveAs myImage format (__SOURCE_DIRECTORY__ + "/Images/output")
 
               let parsedFormat = imageFormatsParser format
 

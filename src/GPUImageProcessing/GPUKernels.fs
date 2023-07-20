@@ -199,3 +199,42 @@ let resize (clContext: ClContext) localWorkSize =
         commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
 
         result
+
+/// <summary>
+/// Creates compiled GPU crop kernel.
+/// </summary>
+/// <param name="clContext">The representation of OpenCL context.</param>
+/// <param name="localWorkSize">The size of the local work group.</param>
+/// <returns>
+/// A function that takes image, original width and height of it,
+/// coordinates of the upper-left corner and the lower-right corner of the region to be cropped,
+/// and asynchronously crops the image using GPU.
+/// The resulting image data is stored in the result array.
+/// </returns>
+let crop (clContext: ClContext) localWorkSize =
+
+    let kernel =
+        <@
+            fun (range: Range1D) (image: ClArray<byte>) imageWidth newWidth newHeight xUpper yUpper (result: ClArray<byte>) ->
+                let p = range.GlobalID0
+                let i = p / newWidth
+                let j = p % newWidth
+
+                if i < newHeight then
+                    result[p] <- image[(i + yUpper) * imageWidth + (xUpper + j)]
+        @>
+
+    let kernel = clContext.Compile kernel
+
+    fun (commandQueue: MailboxProcessor<Msg>) (image: ClArray<byte>) imageWidth imageHeight xUpper yUpper xLower yLower (result: ClArray<byte>) ->
+
+        let newWidth = xLower - xUpper + 1
+        let newHeight = yLower - yUpper + 1
+
+        let ndRange = Range1D.CreateValid(newWidth * newHeight, localWorkSize)
+        let kernel = kernel.GetKernel()
+
+        commandQueue.Post(Msg.MsgSetArguments(fun () -> kernel.KernelFunc ndRange image imageWidth newWidth newHeight xUpper yUpper result))
+        commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
+
+        result
