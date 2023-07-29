@@ -75,7 +75,7 @@ let tests =
 
               Expect.equal myImage3.Data result.Data $"Unexpected: %A{myImage3.Data}.\n Expected: %A{result.Data}. "
 
-          testCase "NearestNeighbour-resized on real image on GPU and nearestNeighbour-resized on CPU should be equal"
+          testCase "NearestNeighbour-resized real image on GPU and nearestNeighbour-resized on CPU should be equal"
           <| fun _ ->
 
               let newWidth = 975
@@ -95,4 +95,26 @@ let tests =
               let expectedResult = resizeCPUNearestNeighbour newWidth newHeight myImage
               let actualResult = resize newWidth newHeight GPUTools.NearestNeighbour myImage
 
-              Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. " ]
+              Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. "
+
+          testCase "Bilinear-resized real image on GPU and bilinear-resized on CPU should be equal"
+          <| fun _ ->
+
+              let newWidth = 975
+              let newHeight = 632
+
+              let expectedResult = resizeCPUBilinear newWidth newHeight myImage3
+              let actualResult = resize newWidth newHeight GPUTools.Bilinear myImage3
+
+              Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. "
+
+          testPropertyWithConfig myConfig "Bilinear-resized generated image on GPU and bilinear-resized on CPU should be equal"
+          <| fun (myImage: MyImage) (dimensions: ImageDimensions) ->
+
+              let newWidth = dimensions.Width
+              let newHeight = dimensions.Height
+
+              let expectedResult = resizeCPUBilinear newWidth newHeight myImage
+              let actualResult = resize newWidth newHeight GPUTools.Bilinear myImage
+
+              Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. "]

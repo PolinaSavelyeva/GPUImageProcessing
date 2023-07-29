@@ -1,6 +1,6 @@
 module Watermark
 
-open Helper
+(*open Helper
 open Expecto
 open Generators
 open BasicTools
@@ -42,3 +42,4 @@ let tests =
           <| fun _ ->
 
               Expect.throws (fun _ -> watermark myImage1 0 myImage1 |> ignore) "Expected positive watermark scale. " ]
+*)

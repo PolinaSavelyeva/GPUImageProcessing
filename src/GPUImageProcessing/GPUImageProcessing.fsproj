@@ -24,8 +24,7 @@
         <Compile Include="FilterKernels.fs" />
         <Compile Include="Agents.fs" />
         <Compile Include="Processing.fs" />
-        <Compile Include="ArguCommands.fs" />
-        <Compile Include="CLI.fs" />
+        <Compile Include="Main.fs" />
     </ItemGroup>
     <ItemGroup>
         <PackageReference Remove="SkiaSharp.NativeAssets.Tizen" />
