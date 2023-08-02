@@ -117,4 +117,4 @@ let tests =
               let expectedResult = resizeCPUBilinear newWidth newHeight myImage
               let actualResult = resize newWidth newHeight GPUTools.Bilinear myImage
 
-              Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. "]
+              Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. " ]
