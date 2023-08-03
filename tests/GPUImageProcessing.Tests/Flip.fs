@@ -2,6 +2,7 @@ module Flip
 
 open Helper
 open Expecto
+open CPUTools
 
 let flip = GPUTools.flip clContext 64
 

@@ -4,6 +4,7 @@ open BasicTools
 open Generators
 open Helper
 open Expecto
+open CPUTools
 
 let resize = GPUTools.resize clContext 64
 
@@ -106,7 +107,7 @@ let tests =
               let expectedResult = resizeCPUBilinear newWidth newHeight myImage3
               let actualResult = resize newWidth newHeight GPUTools.Bilinear myImage3
 
-              Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. "
+              Expect.sequenceEqual actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. "
 
           testPropertyWithConfig myConfig "Bilinear-resized generated image on GPU and bilinear-resized on CPU should be equal"
           <| fun (myImage: MyImage) (dimensions: ImageDimensions) ->

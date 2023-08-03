@@ -2,6 +2,7 @@ module Rotation
 
 open Helper
 open Expecto
+open CPUTools
 
 let rotate = GPUTools.rotate clContext 64
 

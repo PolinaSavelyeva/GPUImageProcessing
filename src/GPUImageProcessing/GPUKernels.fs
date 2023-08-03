@@ -136,66 +136,64 @@ let resize (clContext: ClContext) localWorkSize =
 
     let kernel =
         <@
-            fun (range: Range1D) (image: ClArray<byte>) imageWidth imageHeight newWidth newHeight weight (result: ClArray<byte>) ->
+            fun (range: Range1D) (image: ClArray<byte>) imageWidth imageHeight newWidth newHeight (scaleX: ClCell<float32>) (scaleY: ClCell<float32>) weight (result: ClArray<byte>) ->
                 let p = range.GlobalID0
                 let py = p / newWidth
                 let px = p % newWidth
-                let scaleX = float32 imageWidth / float32 newWidth
-                let scaleY = float32 imageHeight / float32 newHeight
+                let positionY = float32 py * scaleY.Value
+                let yLower = int positionY
+                let positionX = float32 px * scaleX.Value
+                let xLower = int positionX
 
-                if py < newHeight then
-                    let scaledX = float32 px * scaleX
-                    let scaledY = float32 py * scaleY
-                    let xLower = px * imageWidth / newWidth
-                    let yLower = py * imageHeight / newHeight
-
+                if py < newHeight && xLower < imageWidth && yLower < imageHeight && xLower >= 0 && yLower >= 0 then
                     if weight = 1 then
-                        let xUpper = if xLower + 1 < imageWidth then xLower + 1 else xLower
                         let yUpper = if yLower + 1 < imageHeight then yLower + 1 else yLower
-
-                        let weightBottom =
-                            if xLower = xUpper then
-                                float32 image[yUpper * imageWidth + xLower]
-                            else
-                                (float32 image[yUpper * imageWidth + xUpper]) * (scaledX - float32 xLower)
-                                + (float32 image[yUpper * imageWidth + xLower]) * (float32 xUpper - scaledX)
-
-                        let weightTop =
-                            if xLower = xUpper then
-                                float32 image[yLower * imageWidth + xUpper]
-                            else
-                                (float32 image[yLower * imageWidth + xUpper]) * (scaledX - float32 xLower)
-                                + (float32 image[yLower * imageWidth + xLower]) * (float32 xUpper - scaledX)
-
-                        let newWeight =
-                            if yLower = yUpper then
-                                weightBottom
-                            else
-                                weightBottom * (scaledY - float32 yLower) + weightTop * (float32 yUpper - scaledY)
+                        let xUpper = if xLower + 1 < imageWidth then xLower + 1 else xLower
 
                         if
-                            p < newWidth * newHeight
-                            && xLower < imageWidth
-                            && yLower < imageHeight
-                            && xUpper < imageWidth
+                            xUpper < imageWidth
                             && yUpper < imageHeight
+                            && xUpper >= 0
+                            && yUpper >= 0
+                            && xLower <= xUpper
+                            && yLower <= yUpper
                         then
+                            let weightBottom =
+                                if xLower = xUpper then
+                                    float32 image[yUpper * imageWidth + xLower]
+                                else
+                                    (float32 image[yUpper * imageWidth + xUpper]) * (positionX - float32 xLower)
+                                    + (float32 image[yUpper * imageWidth + xLower]) * (float32 xUpper - positionX)
+
+                            let weightTop =
+                                if xLower = xUpper then
+                                    float32 image[yLower * imageWidth + xUpper]
+                                else
+                                    (float32 image[yLower * imageWidth + xUpper]) * (positionX - float32 xLower)
+                                    + (float32 image[yLower * imageWidth + xLower]) * (float32 xUpper - positionX)
+
+                            let newWeight =
+                                if yLower = yUpper then
+                                    weightBottom
+                                else
+                                    weightBottom * (positionY - float32 yLower) + weightTop * (float32 yUpper - positionY)
+
                             result[p] <- byte (int newWeight)
-                    elif xLower < imageWidth && yLower < imageHeight then
+                    else
                         let originalIndex = yLower * imageWidth + xLower
 
-                        if p < newWidth * newHeight && originalIndex < imageWidth * imageHeight then
+                        if originalIndex < imageWidth * imageHeight then
                             result[p] <- image[originalIndex]
         @>
 
     let kernel = clContext.Compile kernel
 
-    fun (commandQueue: MailboxProcessor<Msg>) (image: ClArray<byte>) imageWidth imageHeight newWidth newHeight weight (result: ClArray<byte>) ->
+    fun (commandQueue: MailboxProcessor<Msg>) (image: ClArray<byte>) imageWidth imageHeight newWidth newHeight scaleX scaleY weight (result: ClArray<byte>) ->
 
         let ndRange = Range1D.CreateValid(newWidth * newHeight, localWorkSize)
         let kernel = kernel.GetKernel()
 
-        commandQueue.Post(Msg.MsgSetArguments(fun () -> kernel.KernelFunc ndRange image imageWidth imageHeight newWidth newHeight weight result))
+        commandQueue.Post(Msg.MsgSetArguments(fun () -> kernel.KernelFunc ndRange image imageWidth imageHeight newWidth newHeight scaleX scaleY weight result))
         commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
 
         result

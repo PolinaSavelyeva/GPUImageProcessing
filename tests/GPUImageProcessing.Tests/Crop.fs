@@ -4,6 +4,7 @@ open BasicTools
 open Helper
 open Expecto
 open Generators
+open CPUTools
 
 let crop = GPUTools.crop clContext 64
 

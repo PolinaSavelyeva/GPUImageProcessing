@@ -147,8 +147,14 @@ let resize (clContext: ClContext) (localWorkSize: int) =
             | Bilinear -> 1
             | NearestNeighbour -> 0
 
+        let scaleX =
+            clContext.CreateClCell((float32 image.Width) / (float32 newWidth), HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
+
+        let scaleY =
+            clContext.CreateClCell((float32 image.Height) / (float32 newHeight), HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
+
         let result =
-            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(resizeKernel queue input image.Width image.Height newWidth newHeight weight output, result, ch))
+            queue.PostAndReply(fun ch -> Msg.CreateToHostMsg(resizeKernel queue input image.Width image.Height newWidth newHeight scaleX scaleY weight output, result, ch))
 
         queue.Post(Msg.CreateFreeMsg input)
         queue.Post(Msg.CreateFreeMsg output)

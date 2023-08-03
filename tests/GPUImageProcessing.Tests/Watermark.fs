@@ -4,6 +4,7 @@ module Watermark
 open Expecto
 open Generators
 open BasicTools
+open CPUTools
 
 let watermark = GPUTools.watermark clContext 64
 

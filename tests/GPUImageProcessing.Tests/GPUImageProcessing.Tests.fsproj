@@ -8,6 +8,7 @@
     <ItemGroup>
         <Compile Include="AssemblyInfo.fs" />
         <Compile Include="Generators.fs" />
+        <Compile Include="CPUTools.fs" />
         <Compile Include="Helper.fs" />
         <Content Include="Images\input\1.jpg" />
         <Content Include="Images\input\2.jpg" />

@@ -2,6 +2,7 @@ module Filter
 
 open Helper
 open Expecto
+open CPUTools
 open FilterKernels
 
 let applyFilter = GPUTools.applyFilter clContext 64
