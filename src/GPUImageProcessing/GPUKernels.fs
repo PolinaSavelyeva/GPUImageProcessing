@@ -164,8 +164,10 @@ let resize (clContext: ClContext) localWorkSize =
                                 else
                                     let fDataXUpper = float32 image[yUpper * imageWidth + xUpper]
                                     let fDataXLower = float32 image[yUpper * imageWidth + xLower]
-                                    let positionLower = positionX - float32 xLower
-                                    let positionUpper = float32 xUpper - positionX
+                                    let fXLower = float32 xLower
+                                    let fXUpper = float32 xUpper
+                                    let positionLower = positionX - fXLower
+                                    let positionUpper = fXUpper - positionX
                                     let one = fDataXUpper * positionLower
                                     let two = fDataXLower * positionUpper
                                     one + two
@@ -176,8 +178,10 @@ let resize (clContext: ClContext) localWorkSize =
                                 else
                                     let fDataXUpper = float32 image[yLower * imageWidth + xUpper]
                                     let fDataXLower = float32 image[yLower * imageWidth + xLower]
-                                    let positionLower = positionX - float32 xLower
-                                    let positionUpper = float32 xUpper - positionX
+                                    let fXUpper = float32 xUpper
+                                    let fXLower = float32 xLower
+                                    let positionLower = positionX - fXLower
+                                    let positionUpper = fXUpper - positionX
                                     let one = fDataXUpper * positionLower
                                     let two = fDataXLower * positionUpper
                                     one + two
