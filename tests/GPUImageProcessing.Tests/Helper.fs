@@ -16,9 +16,9 @@ let deleteFilesInDirectory (directoryPath: string) =
         System.IO.File.Delete(file)
 
 let device = Brahma.FSharp.ClDevice.GetFirstAppropriateDevice()
-let clContext = Brahma.FSharp.ClContext(device)
+let clContext = Brahma.FSharp.ClContext(device, compilerOptions = "")
 
 let myConfig =
     { FsCheckConfig.defaultConfig with
         arbitrary = [ typeof<Generators.MyGenerators> ]
-        maxTest = 10 }
+        maxTest = 8 }

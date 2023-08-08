@@ -141,9 +141,9 @@ let resize (clContext: ClContext) localWorkSize =
                 let py = p / newWidth
                 let px = p % newWidth
                 let positionY = float32 py * scaleY.Value
-                let yLower = int positionY
                 let positionX = float32 px * scaleX.Value
                 let xLower = int positionX
+                let yLower = int positionY
 
                 if py < newHeight && xLower < imageWidth && yLower < imageHeight && xLower >= 0 && yLower >= 0 then
                     if weight = 1 then
@@ -162,21 +162,37 @@ let resize (clContext: ClContext) localWorkSize =
                                 if xLower = xUpper then
                                     float32 image[yUpper * imageWidth + xLower]
                                 else
-                                    (float32 image[yUpper * imageWidth + xUpper]) * (positionX - float32 xLower)
-                                    + (float32 image[yUpper * imageWidth + xLower]) * (float32 xUpper - positionX)
+                                    let fDataXUpper = float32 image[yUpper * imageWidth + xUpper]
+                                    let fDataXLower = float32 image[yUpper * imageWidth + xLower]
+                                    let positionLower = positionX - float32 xLower
+                                    let positionUpper = float32 xUpper - positionX
+                                    let one = fDataXUpper * positionLower
+                                    let two = fDataXLower * positionUpper
+                                    one + two
 
                             let weightTop =
                                 if xLower = xUpper then
                                     float32 image[yLower * imageWidth + xUpper]
                                 else
-                                    (float32 image[yLower * imageWidth + xUpper]) * (positionX - float32 xLower)
-                                    + (float32 image[yLower * imageWidth + xLower]) * (float32 xUpper - positionX)
+                                    let fDataXUpper = float32 image[yLower * imageWidth + xUpper]
+                                    let fDataXLower = float32 image[yLower * imageWidth + xLower]
+                                    let positionLower = positionX - float32 xLower
+                                    let positionUpper = float32 xUpper - positionX
+                                    let one = fDataXUpper * positionLower
+                                    let two = fDataXLower * positionUpper
+                                    one + two
 
                             let newWeight =
                                 if yLower = yUpper then
                                     weightBottom
                                 else
-                                    weightBottom * (positionY - float32 yLower) + weightTop * (float32 yUpper - positionY)
+                                    let fYUpper = float32 yUpper
+                                    let fYLower = float32 yLower
+                                    let distYUpper = fYUpper - positionY
+                                    let distYLower = positionY - fYLower
+                                    let one = weightTop * distYUpper
+                                    let two = weightBottom * distYLower
+                                    one + two
 
                             result[p] <- byte (int newWeight)
                     else
@@ -187,6 +203,7 @@ let resize (clContext: ClContext) localWorkSize =
         @>
 
     let kernel = clContext.Compile kernel
+
 
     fun (commandQueue: MailboxProcessor<Msg>) (image: ClArray<byte>) imageWidth imageHeight newWidth newHeight scaleX scaleY weight (result: ClArray<byte>) ->
 
@@ -251,28 +268,38 @@ let watermark (clContext: ClContext) localWorkSize =
 
     let kernel =
         <@
-            fun (range: Range1D) (watermark: ClArray<byte>) imageWidth imageHeight imageCenterX imageCenterY watermarkCenterX watermarkCenterY watermarkWidth (result: ClArray<byte>) ->
+            fun (range: Range1D) (watermark: ClArray<byte>) imageWidth imageHeight imageCenterX imageCenterY watermarkCenterX watermarkCenterY watermarkWidth watermarkHeight (result: ClArray<byte>) ->
                 let p = range.GlobalID0
                 let py = p / watermarkWidth
                 let px = p % watermarkWidth
-                let centerDistanceY = py - watermarkCenterY
-                let centerDistanceX = px - watermarkCenterX
 
-                let index =
-                    (imageCenterY + centerDistanceY) * imageWidth + (imageCenterX + centerDistanceX)
+                if py < watermarkHeight then
+                    let centerDistanceY = py - watermarkCenterY
+                    let centerDistanceX = px - watermarkCenterX
+                    let originalImageY = imageCenterY + centerDistanceY
+                    let originalImageX = imageCenterX + centerDistanceX
 
-                if py < imageHeight && index < imageHeight * imageWidth && index >= 0 then
-                    result[index] <- watermark[p]
+                    if
+                        originalImageY < imageHeight
+                        && originalImageY >= 0
+                        && originalImageX < imageWidth
+                        && originalImageX >= 0
+                    then
+                        let index = (originalImageY * imageWidth) + originalImageX
+                        result[index] <- watermark[p]
         @>
 
     let kernel = clContext.Compile kernel
 
     fun (commandQueue: MailboxProcessor<Msg>) (watermark: ClArray<byte>) imageWidth imageHeight imageCenterX imageCenterY watermarkCenterX watermarkCenterY watermarkWidth watermarkHeight (result: ClArray<byte>) ->
 
-        let ndRange = Range1D.CreateValid(watermarkWidth * watermarkHeight, localWorkSize)
+        let ndRange = Range1D.CreateValid(watermark.Length, localWorkSize)
         let kernel = kernel.GetKernel()
 
-        commandQueue.Post(Msg.MsgSetArguments(fun () -> kernel.KernelFunc ndRange watermark imageWidth imageHeight imageCenterX imageCenterY watermarkCenterX watermarkCenterY watermarkWidth result))
+        commandQueue.Post(
+            Msg.MsgSetArguments(fun () -> kernel.KernelFunc ndRange watermark imageWidth imageHeight imageCenterX imageCenterY watermarkCenterX watermarkCenterY watermarkWidth watermarkHeight result)
+        )
+
         commandQueue.Post(Msg.CreateRunMsg<INDRange, obj> kernel)
 
         result

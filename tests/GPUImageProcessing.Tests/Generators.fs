@@ -13,8 +13,8 @@ let generateUniqueFileName (extension: string) =
 
 let myImageGen =
     gen {
-        let! length1 = Gen.choose (2, 100)
-        let! length2 = Gen.choose (2, 100)
+        let! length1 = Gen.choose (2, 200)
+        let! length2 = Gen.choose (2, 200)
 
         let! data = Gen.arrayOfLength (length1 * length2) (Gen.elements [ 0uy .. 127uy ])
 
@@ -62,9 +62,10 @@ type ImageCroppingCoordinates =
           XLower = xLower
           YLower = yLower }
 
-let upperChooser x1 x2 = if x1 = x2 then x1 - 1 else min x1 x2
-
 let imageCroppingCoordinatesGen =
+
+    let upperChooser x1 x2 = if x1 = x2 then x1 - 1 else min x1 x2
+
     gen {
         let! height1 = Gen.choose (1, 200)
         let! height2 = Gen.choose (1, 200)

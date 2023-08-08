@@ -223,22 +223,25 @@ let watermark (clContext: ClContext) (localWorkSize: int) =
     let watermarkKernel = GPUKernels.watermark clContext localWorkSize
     let queue = clContext.QueueProvider.CreateQueue()
 
-    fun (watermark: MyImage) (watermarkScale: float) (image: MyImage) ->
+    fun (watermark: MyImage) (watermarkScale: float32) (image: MyImage) ->
 
-        if watermarkScale <= 0 then
+        if watermarkScale <= 0f then
             failwith $"Expected positive watermark scale, but given %A{watermarkScale}. "
+
+        let newWatermarkWidth = int (float32 watermark.Width * watermarkScale)
+        let newWatermarkHeight = int (float32 watermark.Height * watermarkScale)
+
+        if newWatermarkWidth <= 0 || newWatermarkHeight <= 0 then
+            failwith $"Expected watermark scale to be greater than or equal to %f{1f / float32 watermark.Height} and %f{1f / float32 watermark.Width}, but given %A{watermarkScale}. "
 
         let imageCenterX = image.Width / 2
         let imageCenterY = image.Height / 2
 
-        let watermarkWidth = int (float watermark.Width / watermarkScale)
-        let watermarkHeight = int (float watermark.Height / watermarkScale)
-
-        let watermarkCenterX = watermarkWidth / 2
-        let watermarkCenterY = watermarkHeight / 2
+        let watermarkCenterX = newWatermarkWidth / 2
+        let watermarkCenterY = newWatermarkHeight / 2
 
         let resizedWatermark =
-            resize clContext 64 watermarkWidth watermarkHeight NearestNeighbour watermark
+            resize clContext localWorkSize newWatermarkWidth newWatermarkHeight NearestNeighbour watermark
 
         let input =
             clContext.CreateClArray<byte>(resizedWatermark.Data, HostAccessMode.NotAccessible, DeviceAccessMode.ReadOnly)
@@ -250,7 +253,11 @@ let watermark (clContext: ClContext) (localWorkSize: int) =
 
         let result =
             queue.PostAndReply(fun ch ->
-                Msg.CreateToHostMsg(watermarkKernel queue input image.Width image.Height imageCenterX imageCenterY watermarkCenterX watermarkCenterY watermarkWidth watermarkHeight output, result, ch))
+                Msg.CreateToHostMsg(
+                    watermarkKernel queue input image.Width image.Height imageCenterX imageCenterY watermarkCenterX watermarkCenterY newWatermarkWidth newWatermarkHeight output,
+                    result,
+                    ch
+                ))
 
         queue.Post(Msg.CreateFreeMsg input)
         queue.Post(Msg.CreateFreeMsg output)

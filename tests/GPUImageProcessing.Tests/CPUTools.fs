@@ -153,34 +153,45 @@ let cropCPU (xUpper, yUpper) (xLower, yLower) (image: MyImage) =
 
     MyImage(buffer, newWidth, newHeight, image.Name, image.Extension)
 
-let watermarkCPU (watermark: MyImage) (watermarkScale: float) (image: MyImage) =
+let watermarkCPU (watermark: MyImage) (watermarkScale: float32) (image: MyImage) =
 
-    if watermarkScale <= 0 then
+    if watermarkScale <= 0f then
         failwith $"Expected positive watermark scale, but given %A{watermarkScale}. "
+
+    let newWatermarkWidth = int (float32 watermark.Width * watermarkScale)
+    let newWatermarkHeight = int (float32 watermark.Height * watermarkScale)
+
+    if newWatermarkWidth <= 0 || newWatermarkHeight <= 0 then
+        failwith $"Expected watermark scale to be greater than or equal to %f{1f / float32 watermark.Height}, but given %A{watermarkScale}. "
 
     let imageCenterX = image.Width / 2
     let imageCenterY = image.Height / 2
 
-    let watermarkWidth = int (float watermark.Width / watermarkScale)
-    let watermarkHeight = int (float watermark.Height / watermarkScale)
-
-    let watermarkCenterX = watermarkWidth / 2
-    let watermarkCenterY = watermarkHeight / 2
+    let watermarkCenterX = newWatermarkWidth / 2
+    let watermarkCenterY = newWatermarkHeight / 2
 
     let resizedWatermark =
-        resizeCPUNearestNeighbour watermarkWidth watermarkHeight watermark
+        resizeCPUNearestNeighbour newWatermarkWidth newWatermarkHeight watermark
 
     let buffer = image.Data
 
-    for y in 0 .. watermarkHeight - 1 do
-        let distanceY = y - watermarkCenterY
+    for y in 0 .. newWatermarkHeight - 1 do
+        let centerDistanceY = y - watermarkCenterY
 
-        for x in 0 .. watermarkWidth - 1 do
+        for x in 0 .. newWatermarkWidth - 1 do
 
-            let distanceX = x - watermarkCenterX
-            let index = (imageCenterY + distanceY) * image.Width + (imageCenterX + distanceX)
+            let centerDistanceX = x - watermarkCenterX
 
-            if index < image.Height * image.Width && index >= 0 then
-                buffer[index] <- resizedWatermark.Data[y * watermarkWidth + x]
+            let originalImageY = imageCenterY + centerDistanceY
+            let originalImageX = imageCenterX + centerDistanceX
+
+            if
+                originalImageY < image.Height
+                && originalImageY >= 0
+                && originalImageX < image.Width
+                && originalImageX >= 0
+            then
+                let index = originalImageY * image.Width + originalImageX
+                buffer[index] <- resizedWatermark.Data[y * newWatermarkWidth + x]
 
     MyImage(buffer, image.Width, image.Height, image.Name, image.Extension)
