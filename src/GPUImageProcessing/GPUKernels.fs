@@ -162,41 +162,21 @@ let resize (clContext: ClContext) localWorkSize =
                                 if xLower = xUpper then
                                     float32 image[yUpper * imageWidth + xLower]
                                 else
-                                    let fDataXUpper = float32 image[yUpper * imageWidth + xUpper]
-                                    let fDataXLower = float32 image[yUpper * imageWidth + xLower]
-                                    let fXLower = float32 xLower
-                                    let fXUpper = float32 xUpper
-                                    let positionLower = positionX - fXLower
-                                    let positionUpper = fXUpper - positionX
-                                    let one = fDataXUpper * positionLower
-                                    let two = fDataXLower * positionUpper
-                                    one + two
+                                    (float32 image[yUpper * imageWidth + xUpper]) * (positionX - float32 xLower)
+                                    + (float32 image[yUpper * imageWidth + xLower]) * (float32 xUpper - positionX)
 
                             let weightTop =
                                 if xLower = xUpper then
                                     float32 image[yLower * imageWidth + xUpper]
                                 else
-                                    let fDataXUpper = float32 image[yLower * imageWidth + xUpper]
-                                    let fDataXLower = float32 image[yLower * imageWidth + xLower]
-                                    let fXUpper = float32 xUpper
-                                    let fXLower = float32 xLower
-                                    let positionLower = positionX - fXLower
-                                    let positionUpper = fXUpper - positionX
-                                    let one = fDataXUpper * positionLower
-                                    let two = fDataXLower * positionUpper
-                                    one + two
+                                    (float32 image[yLower * imageWidth + xUpper]) * (positionX - float32 xLower)
+                                    + (float32 image[yLower * imageWidth + xLower]) * (float32 xUpper - positionX)
 
                             let newWeight =
                                 if yLower = yUpper then
                                     weightBottom
                                 else
-                                    let fYUpper = float32 yUpper
-                                    let fYLower = float32 yLower
-                                    let distYUpper = fYUpper - positionY
-                                    let distYLower = positionY - fYLower
-                                    let one = weightTop * distYUpper
-                                    let two = weightBottom * distYLower
-                                    one + two
+                                    weightBottom * (positionY - float32 yLower) + weightTop * (float32 yUpper - positionY)
 
                             result[p] <- byte (int newWeight)
                     else

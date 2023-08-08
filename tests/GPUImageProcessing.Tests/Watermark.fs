@@ -18,7 +18,7 @@ let tests =
               let expectedResult = watermarkCPU myImage1 2f myImage3
               let actualResult = watermark myImage1 2f myImage3
 
-              Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. "
+              Expect.equal actualResult.Data expectedResult.Data "The GPU and CPU watermarked real image data should be equal."
 
           testPropertyWithConfig myConfig "Watermarking on GPU is equal to watermarking on CPU on generated image"
           <| fun (myImage: MyImage) (watermarkImage: MyImage) (scaleWatermark: NormalFloat) ->
@@ -38,7 +38,7 @@ let tests =
               let expectedResult = watermarkCPU watermarkImage scaleWatermark myImage
               let actualResult = watermark watermarkImage scaleWatermark myImage
 
-              Expect.equal actualResult.Data expectedResult.Data $"Unexpected: %A{actualResult.Data}.\n Expected: %A{expectedResult.Data}. "
+              Expect.equal actualResult.Data expectedResult.Data "The GPU and CPU watermarked generated image data should be equal."
 
           testCase "Applying watermark using negative scale parameter should cause an error"
           <| fun _ ->
