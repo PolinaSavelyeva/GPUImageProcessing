@@ -4,6 +4,7 @@ open Agents
 open BasicTools
 open FilterKernels
 open Brahma.FSharp
+open GPUTools
 
 /// <summary>
 /// Specifies the level of agents support.
@@ -23,16 +24,21 @@ type Transformations =
     | Lighten
     | Darken
     | Edges
-    | RotationR // Clockwise rotation
-    | RotationL // Counterclockwise rotation
-    | FlipV // Vertical flip
-    | FlipH // Horizontal flip
+    | Filter of filterKernel: float32 array2d
+    | Rotation of isClockwise: bool
+    | Flip of isVertical: bool
+    | Resize of newWidth: int * newHeight: int * algorithm: ResizeAlgorithm
+    | Crop of xUpper: int * yUpper: int * xLower: int * yLower: int
+    | Watermark of watermarkImage: MyImage * watermarkScale: float32
 
 let transformationsParser (clContext: ClContext) (localWorkSize: int) =
 
-    let applyFilterKernel = GPUTools.applyFilter clContext localWorkSize
-    let flipKernel = GPUTools.flip clContext localWorkSize
-    let rotateKernel = GPUTools.rotate clContext localWorkSize
+    let applyFilterKernel = applyFilter clContext localWorkSize
+    let flipKernel = flip clContext localWorkSize
+    let rotateKernel = rotate clContext localWorkSize
+    let resizeKernel = resize clContext localWorkSize
+    let cropKernel = crop clContext localWorkSize
+    let watermarkKernel = watermark clContext localWorkSize
 
     fun transformation ->
         match transformation with
@@ -41,10 +47,12 @@ let transformationsParser (clContext: ClContext) (localWorkSize: int) =
         | Lighten -> applyFilterKernel lightenKernel
         | Darken -> applyFilterKernel darkenKernel
         | Edges -> applyFilterKernel edgesKernel
-        | RotationR -> rotateKernel true
-        | RotationL -> rotateKernel false
-        | FlipV -> flipKernel true
-        | FlipH -> flipKernel false
+        | Filter filterKernel -> applyFilterKernel filterKernel
+        | Rotation isClockwise -> rotateKernel isClockwise
+        | Flip isVertical -> flipKernel isVertical
+        | Resize (newWidth, newHeight, algorithm) -> resizeKernel newWidth newHeight algorithm
+        | Crop (xUpper, yUpper, xLower, yLower) -> cropKernel (xUpper, yUpper) (xLower, yLower)
+        | Watermark (watermarkImage, watermarkScale) -> watermarkKernel watermarkImage watermarkScale
 
 /// <summary>
 /// Processes images located at the specified input path and saves the processed images to the specified output path.

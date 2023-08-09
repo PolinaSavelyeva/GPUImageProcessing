@@ -10,11 +10,11 @@
         <Compile Include="Generators.fs" />
         <Compile Include="CPUTools.fs" />
         <Compile Include="Helper.fs" />
-        <Content Include="Images\input\1.jpg" />
-        <Content Include="Images\input\2.jpg" />
-        <Content Include="Images\input\3.jpg" />
-        <Content Include="Images\input\4.jpg" />
-        <Folder Include="Images\output\" />
+        <Content Include="Images/input/1.jpg" />
+        <Content Include="Images/input/2.jpg" />
+        <Content Include="Images/input/3.jpg" />
+        <Content Include="Images/input/4.jpg" />
+        <Folder Include="Images/output/" />
         <Compile Include="Rotation.fs" />
         <Compile Include="Crop.fs" />
         <Compile Include="Filter.fs" />
@@ -66,5 +66,5 @@
             <Version>17.5.0</Version>
         </PackageReference>
     </ItemGroup>
-    <Import Project="..\..\.paket\Paket.Restore.targets" />
+    <Import Project="../../.paket/Paket.Restore.targets" />
 </Project>
