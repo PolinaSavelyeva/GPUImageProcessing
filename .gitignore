@@ -275,3 +275,4 @@ tmp/
 temp/
 .fsdocs
 docs/
+.DS_Store

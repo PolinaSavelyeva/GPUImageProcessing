@@ -2,8 +2,14 @@
   "version": 1,
   "isRoot": true,
   "tools": {
+    "sourcelink": {
+      "version": "3.1.1",
+      "commands": [
+        "sourcelink"
+      ]
+    },
     "dotnet-reportgenerator-globaltool": {
-      "version": "5.1.18",
+      "version": "4.8.13",
       "commands": [
         "reportgenerator"
       ]
@@ -15,21 +21,15 @@
       ]
     },
     "fsharp-analyzers": {
-      "version": "0.11.0",
+      "version": " 0.10.1",
       "commands": [
         "fsharp-analyzers"
       ]
     },
     "fantomas": {
-      "version": "6.0.1",
+      "version": "5.0.0",
       "commands": [
         "fantomas"
-      ]
-    },
-    "fsdocs-tool": {
-      "version": "18.1.0",
-      "commands": [
-        "fsdocs"
       ]
     }
   }

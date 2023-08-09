@@ -1,9 +1,13 @@
-namespace GPUImageProcessing.Tests
+namespace Tests
 
 module ExpectoTemplate =
 
     open Expecto
+    open Helper
+
 
     [<EntryPoint>]
     let main argv =
-        Tests.runTestsInAssembly defaultConfig argv
+        System.IO.Path.Combine(src, "Images", "output") |> deleteFilesInDirectory
+
+        runTestsInAssembly defaultConfig argv

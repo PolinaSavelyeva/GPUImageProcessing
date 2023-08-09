@@ -1,40 +1,56 @@
 name: Build master
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
-  build:
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
-    runs-on: ${{ matrix.os }}
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Setup necessary dotnet SDKs
-        uses: actions/setup-dotnet@v3
-        with:
-          global-json-file: global.json
-          dotnet-version: |
-            6.x
-
-      - name: Build via Bash
-        if: runner.os != 'Windows'
-        run: |
-          chmod +x ./build.sh
-          ./build.sh
-        env:
-          CI: true
-          ENABLE_COVERAGE: true
-      - name: Build via Windows
-        if: runner.os == 'Windows'
-        run: ./build.cmd
-        env:
-          CI: true
-          ENABLE_COVERAGE: true
+    build:
+        strategy:
+            matrix:
+                os: [ubuntu-latest, windows-latest, macOS-latest]
+        runs-on: ${{ matrix.os }}
+        
+        steps:
+            - uses: actions/checkout@v2
+            - name: Use .NET Core 3.1 SDK
+              uses: actions/setup-dotnet@v1
+              with:
+                  dotnet-version: '3.1.x'
+            - name: Use .NET Core 5.0.x SDK
+              uses: actions/setup-dotnet@v1
+              with:
+                  dotnet-version: '5.0.x'
+            # Not specifying a version will attempt to install via global.json
+            - name: Use .NET Core global.json
+              uses: actions/setup-dotnet@v1
+            - name: Build
+              if: runner.os != 'Windows'
+              run: |
+                  chmod +x ./build.sh
+                  ./build.sh DotnetBuild
+              env:
+                  CI: true
+            - name: Build
+              if: runner.os == 'Windows'
+              run: ./build.cmd DotnetBuild
+              env:
+                  CI: true
+    test:
+        strategy:
+            matrix:
+                os: [self-hosted]
+        runs-on: ${{ matrix.os }}
+        
+        steps:
+            - uses: actions/checkout@v2
+            - name: Test
+              if: runner.os != 'Windows'
+              run: |
+                  chmod +x ./build.sh
+                  ./build.sh DotnetTest
+              env:
+                  CI: true
+            - name: Test
+              if: runner.os == 'Windows'
+              run: ./build.cmd DotnetTest
+              env:
+                  CI: true
